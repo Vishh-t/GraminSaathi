@@ -62,9 +62,9 @@ public class SurvivalSimulatorService {
 
         String verdict;
         if (deficitMonth == null) {
-            verdict = "Business survives comfortably across the 24-month simulated period ✅";
+            verdict = "Business survives comfortably across the 24-month simulated period";
         } else {
-            verdict = String.format("⚠️ Cash-flow deficit likely from Month %d under this scenario", deficitMonth);
+            verdict = String.format("Cash-flow deficit likely from Month %d under this scenario", deficitMonth);
         }
 
         return new SimulationResult(cashCurve, verdict, deficitMonth);

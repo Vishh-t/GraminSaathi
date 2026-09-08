@@ -4,6 +4,7 @@ import { referenceAPI, analysisAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import TopNav from '../components/TopNav';
 import { formatCurrency } from '../utils/format';
+import { getErrorMessage } from '../utils/errors';
 import { Loader2, Target, TrendingUp, DollarSign, Calculator } from 'lucide-react';
 
 export default function GoalSeekPage() {
@@ -41,7 +42,7 @@ export default function GoalSeekPage() {
       });
       setResult(res.data);
     } catch (err) {
-      setError(t('errors.network'));
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

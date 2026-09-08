@@ -3,6 +3,7 @@ import { I18nProvider } from './i18n/i18n';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './hooks/useToast';
 import { useAuth } from './context/AuthContext';
+import AppErrorBoundary from './components/AppErrorBoundary';
 import './index.css';
 
 // Pages
@@ -105,14 +106,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <I18nProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
-    </I18nProvider>
+    <AppErrorBoundary>
+      <I18nProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </I18nProvider>
+    </AppErrorBoundary>
   );
 }

@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/i18n';
 import { useAuth } from '../context/AuthContext';
 import TopNav from '../components/TopNav';
 import { formatCurrency } from '../utils/format';
+import { getErrorMessage, getErrorMessageFromBlob } from '../utils/errors';
 import { Loader2, FileText, Download, Eye, Calendar, MapPin, Briefcase, DollarSign, FileBarChart, TrendingUp } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -27,7 +28,7 @@ export default function ReportsPage() {
       const res = await reportsAPI.getAll();
       setReports(res.data);
     } catch (err) {
-      setError(t('errors.network'));
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -52,7 +53,7 @@ export default function ReportsPage() {
       link.click();
       link.remove();
     } catch (err) {
-      alert(t('errors.server'));
+      alert(await getErrorMessageFromBlob(err));
     }
   };
 

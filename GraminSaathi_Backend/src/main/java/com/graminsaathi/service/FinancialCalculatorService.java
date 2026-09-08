@@ -58,7 +58,7 @@ public class FinancialCalculatorService {
 
         SchemesReference.Scheme primaryScheme = schemesDataLoader.getPrimaryScheme(projectCost);
         if (primaryScheme == null) {
-            throw new IllegalArgumentException("Project cost exceeds the ₹50 lakh scheme ceiling.");
+            throw new IllegalArgumentException("Project cost exceeds the Rs. 50 lakh scheme ceiling.");
         }
 
         String schemeName = primaryScheme.getSchemeName();
@@ -104,7 +104,7 @@ public class FinancialCalculatorService {
             if (estimatedMonthlyUnitsSold > 0) {
                 breakevenPrice = round((category.getReferenceMonthlyOperatingCost() + emi) / estimatedMonthlyUnitsSold, 2);
                 breakevenNote = String.format(
-                        "At the current sales volume, your minimum viable price is ₹%.2f — your planned price of ₹%.2f gives you a ₹%.2f per-unit safety margin.",
+                        "At the current sales volume, your minimum viable price is Rs. %.2f — your planned price of Rs. %.2f gives you a Rs. %.2f per-unit safety margin.",
                         breakevenPrice, avgLocalPrice, avgLocalPrice - breakevenPrice
                 );
             }
@@ -161,7 +161,7 @@ public class FinancialCalculatorService {
 
         if (remainingAfterMargin < workingCapitalEstimate) {
             return String.format(
-                    "⚠️ Your margin covers the 10%% contribution, but you have no separate buffer for the first %d months of operating costs (~₹%.0f). Consider starting with the recommended lower project size, or arranging a small additional buffer before applying.",
+                    "Your margin covers the 10%% contribution, but you have no separate buffer for the first %d months of operating costs (~Rs. %.0f). Consider starting with the recommended lower project size, or arranging a small additional buffer before applying.",
                     workingCapitalMonths, workingCapitalEstimate
             );
         }

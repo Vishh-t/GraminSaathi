@@ -17,6 +17,7 @@ import LocalPriceIntelligence from '../components/LocalPriceIntelligence';
 import FailureBoundary from '../components/FailureBoundary';
 import SchemeComparisonTable from '../components/SchemeComparisonTable';
 import { formatCurrency } from '../utils/format';
+import { getErrorMessage, getErrorMessageFromBlob } from '../utils/errors';
 import { Loader2, FileText, MapPin, BarChart2, Download, Save, Lightbulb } from 'lucide-react';
 
 const tabs = [
@@ -62,7 +63,7 @@ export default function AnalysisPage() {
       });
       setAnalysis(res.data);
     } catch (err) {
-      setError(t('errors.network'));
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,7 @@ export default function AnalysisPage() {
       link.click();
       link.remove();
     } catch (err) {
-      alert(t('errors.server'));
+      alert(await getErrorMessageFromBlob(err));
     }
   };
 
@@ -98,11 +99,11 @@ export default function AnalysisPage() {
         villageName: village,
         businessCategory: category,
         availableMarginCapital: parseFloat(capital),
-        resultJson: analysis,
+        resultJson: JSON.stringify(analysis),
       });
       alert('Report saved successfully!');
     } catch (err) {
-      alert(t('errors.server'));
+      alert(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -129,10 +130,24 @@ export default function AnalysisPage() {
 
   if (error || !analysis) {
     return (
-      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
-        <div className="text-center p-8">
-          <p className="text-red-600">{error || 'Failed to load analysis'}</p>
-          <button onClick={loadAnalysis} className="mt-4 btn-primary">{t('common.retry')}</button>
+      <div className="min-h-screen bg-[#f9fafb]">
+        <TopNav subtitle="Business Advisory" />
+        <div className="max-w-xl mx-auto px-4 py-20 text-center">
+          <FileText className="w-14 h-14 mx-auto text-gray-300 mb-4" />
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            {village && category && capital ? (error || 'Failed to load analysis') : 'Pick a business to analyze first'}
+          </h2>
+          <p className="text-gray-500 mb-6">
+            {village && category && capital
+              ? "We couldn't load this analysis. The backend may be unreachable, or check the console for details."
+              : 'Analysis needs a village, business type, and available capital. Start from Discovery to pick one.'}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            {village && category && capital && (
+              <button onClick={loadAnalysis} className="btn-secondary">{t('common.retry')}</button>
+            )}
+            <button onClick={() => navigate('/discovery')} className="btn-primary">Go to Discovery</button>
+          </div>
         </div>
       </div>
     );

@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/i18n';
 import TopNav from '../components/TopNav';
 import SurvivalChart from '../components/SurvivalChart';
 import { formatCurrency } from '../utils/format';
+import { getErrorMessage } from '../utils/errors';
 import { Loader2, AlertTriangle, CheckCircle, Play, RotateCcw } from 'lucide-react';
 
 const shockOptions = [
@@ -75,7 +76,7 @@ export default function SimulatorPage() {
       });
       setResult(res.data);
     } catch (err) {
-      setError(t('errors.network'));
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

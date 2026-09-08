@@ -97,7 +97,7 @@ public class AgentCommitteeService {
         return new AgentOpinion(
                 "Finance Agent",
                 opinion,
-                String.format("DSCR: %.2f (%s) — Net operating income: ₹%.0f, EMI: ₹%.0f",
+                String.format("DSCR: %.2f (%s) — Net operating income: Rs. %.0f, EMI: Rs. %.0f",
                         dscr.dscr(), dscr.label(), dscr.monthlyNetOperatingIncome(), dscr.emi())
         );
     }
