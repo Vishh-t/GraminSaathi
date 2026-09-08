@@ -1,0 +1,134 @@
+{
+  "villages": [
+    {
+      "village_name": "Ghoti",
+      "block": "Igatpuri",
+      "district": "Nashik",
+      "state": "Maharashtra",
+      "latitude": 19.7515,
+      "longitude": 73.6197,
+      "population_5km_radius": 8420,
+      "households_5km_radius": 1640,
+      "business_data": {
+        "Dairy": { "competitor_count": 2, "avg_local_price": 42 },
+        "Tailoring": { "competitor_count": 11, "avg_local_price": 250 },
+        "Retail / Kirana Store": { "competitor_count": 14, "avg_local_price": null },
+        "Flour Mill": { "competitor_count": 1, "avg_local_price": 4 }
+      }
+    },
+    {
+      "village_name": "Bilaspur",
+      "block": "Kota",
+      "district": "Rajgarh",
+      "state": "Madhya Pradesh",
+      "latitude": 23.3315,
+      "longitude": 76.9349,
+      "population_5km_radius": 5200,
+      "households_5km_radius": 980,
+      "business_data": {
+        "Dairy": { "competitor_count": 4, "avg_local_price": 38 },
+        "Tailoring": { "competitor_count": 3, "avg_local_price": 180 },
+        "Retail / Kirana Store": { "competitor_count": 6, "avg_local_price": null },
+        "Flour Mill": { "competitor_count": 2, "avg_local_price": 3.5 }
+      }
+    },
+    {
+      "village_name": "Peddapuram",
+      "block": "Kakinada Rural",
+      "district": "East Godavari",
+      "state": "Andhra Pradesh",
+      "latitude": 17.0788,
+      "longitude": 82.1400,
+      "population_5km_radius": 12300,
+      "households_5km_radius": 2450,
+      "business_data": {
+        "Dairy": { "competitor_count": 6, "avg_local_price": 45 },
+        "Tailoring": { "competitor_count": 9, "avg_local_price": 300 },
+        "Retail / Kirana Store": { "competitor_count": 21, "avg_local_price": null },
+        "Flour Mill": { "competitor_count": 3, "avg_local_price": 4.2 }
+      }
+    }
+  ],
+  "business_categories": [
+    {
+      "category_name": "Dairy",
+      "reference_project_cost": 1000000,
+      "reference_cost_range": [650000, 1400000],
+      "working_capital_months": 3,
+      "reference_monthly_revenue": 45000,
+      "reference_monthly_operating_cost": 31500,
+      "secondary_opportunity": "Vermicompost from dairy waste",
+      "source_note": "Anchored to a real PMEGP dairy/goshala DPR (~Rs 13.46 lakh project cost).",
+      "single_buyer_dependency_risk": "Medium",
+      "primary_input_dependency_note": "Fodder supply can be seasonal — identify at least 2 suppliers before starting",
+      "peer_benchmark": { "sample_size": 24, "avg_monthly_revenue_after_6_months": 41000, "pct_still_operating_after_1_year": 78 },
+      "roadmap_milestones": [
+        { "month": 1, "milestone": "Complete loan disbursal, purchase cattle/equipment" },
+        { "month": 2, "milestone": "Begin operations, establish first buyer relationships" },
+        { "month": 3, "milestone": "Moratorium ends — first EMI due, review actual vs. projected costs" },
+        { "month": 6, "milestone": "Evaluate pricing against local market, consider secondary revenue stream (Vermicompost)" },
+        { "month": 12, "milestone": "First full-year review — compare to peer benchmark cohort" }
+      ]
+    },
+    {
+      "category_name": "Tailoring",
+      "reference_project_cost": 250000,
+      "reference_cost_range": [150000, 350000],
+      "working_capital_months": 2,
+      "reference_monthly_revenue": 18000,
+      "reference_monthly_operating_cost": 12600,
+      "secondary_opportunity": "School uniform bulk contracts",
+      "source_note": "Anchored to real PMEGP/Mudra tailoring shop project data.",
+      "single_buyer_dependency_risk": "Low",
+      "primary_input_dependency_note": "Fabric suppliers generally available; diversify across 2-3 wholesalers",
+      "peer_benchmark": { "sample_size": 18, "avg_monthly_revenue_after_6_months": 16500, "pct_still_operating_after_1_year": 85 },
+      "roadmap_milestones": [
+        { "month": 1, "milestone": "Complete loan disbursal, purchase machines & initial fabric stock" },
+        { "month": 2, "milestone": "Begin stitching operations, build local client base" },
+        { "month": 3, "milestone": "Moratorium ends — first EMI due, track order volume vs. capacity" },
+        { "month": 6, "milestone": "Approach schools for uniform contracts before academic year" },
+        { "month": 12, "milestone": "First full-year review — compare to peer benchmark cohort" }
+      ]
+    },
+    {
+      "category_name": "Retail / Kirana Store",
+      "reference_project_cost": 500000,
+      "reference_cost_range": [150000, 2000000],
+      "working_capital_months": 2,
+      "reference_monthly_revenue": 35000,
+      "reference_monthly_operating_cost": 24500,
+      "secondary_opportunity": "Bill-payment / mobile-recharge counter",
+      "source_note": "PMEGP business/service sector ceiling is Rs 20 lakh; mid-range figure used as default.",
+      "single_buyer_dependency_risk": "Low",
+      "primary_input_dependency_note": "Diversify stock across multiple wholesalers to avoid single-supplier risk",
+      "peer_benchmark": { "sample_size": 30, "avg_monthly_revenue_after_6_months": 32000, "pct_still_operating_after_1_year": 82 },
+      "roadmap_milestones": [
+        { "month": 1, "milestone": "Complete loan disbursal, set up shop, stock initial inventory" },
+        { "month": 2, "milestone": "Begin operations, establish daily footfall baseline" },
+        { "month": 3, "milestone": "Moratorium ends — first EMI due, review inventory turnover" },
+        { "month": 6, "milestone": "Add bill-payment/recharge services, evaluate product mix" },
+        { "month": 12, "milestone": "First full-year review — compare to peer benchmark cohort" }
+      ]
+    },
+    {
+      "category_name": "Flour Mill",
+      "reference_project_cost": 400000,
+      "reference_cost_range": [200000, 600000],
+      "working_capital_months": 2,
+      "reference_monthly_revenue": 22000,
+      "reference_monthly_operating_cost": 15400,
+      "secondary_opportunity": "Spice grinding using the same machinery",
+      "source_note": "Standard KVIC/PMEGP model project profile range for small flour-milling units.",
+      "single_buyer_dependency_risk": "Medium",
+      "primary_input_dependency_note": "Grain supply depends on local harvest cycles — maintain buffer stock or tie up with 2+ farmers",
+      "peer_benchmark": { "sample_size": 15, "avg_monthly_revenue_after_6_months": 20000, "pct_still_operating_after_1_year": 80 },
+      "roadmap_milestones": [
+        { "month": 1, "milestone": "Complete loan disbursal, install mill, procure initial grain stock" },
+        { "month": 2, "milestone": "Begin milling operations, establish local farmer buy-in" },
+        { "month": 3, "milestone": "Moratorium ends — first EMI due, monitor yield rates" },
+        { "month": 6, "milestone": "Start spice grinding as secondary revenue stream" },
+        { "month": 12, "milestone": "First full-year review — compare to peer benchmark cohort" }
+      ]
+    }
+  ]
+}

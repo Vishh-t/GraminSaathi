@@ -1,0 +1,26 @@
+# === IDE ===
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.classpath
+.factorypath
+.project
+.DS_Store
+
+# === Backend (Maven / Spring Boot) ===
+GraminSaathi_Backend/target/
+GraminSaathi_Backend/HELP.md
+GraminSaathi_Backend/.mvn/wrapper/maven-wrapper.jar
+GraminSaathi_Backend/src/main/resources/application.properties
+
+# === Frontend (Node / Vite) ===
+sih_frontend/node_modules/
+sih_frontend/dist/
+sih_frontend/dist-ssr/
+sih_frontend/*.local
+sih_frontend/.env
+sih_frontend/.env.local
+sih_frontend/*.log
