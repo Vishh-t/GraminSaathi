@@ -1,8 +1,18 @@
+import { useEffect } from 'react';
 import { useVoice } from '../hooks/useVoice';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 
 export default function VoiceButton({ onTranscript, language = 'en-IN', className = '' }) {
   const { isSupported, isListening, transcript, error, startListening, stopListening, speak, clearTranscript } = useVoice(language);
+
+  // Bug fix: this component was capturing speech into its own local `transcript`
+  // state but never handing it back to the parent. Once recognition finishes and
+  // we have a final transcript, push it up via onTranscript.
+  useEffect(() => {
+    if (!isListening && transcript && onTranscript) {
+      onTranscript(transcript);
+    }
+  }, [isListening, transcript, onTranscript]);
 
   const handleStart = () => {
     clearTranscript();
@@ -26,7 +36,7 @@ export default function VoiceButton({ onTranscript, language = 'en-IN', classNam
   }
 
   return (
-    <div className="relative">
+    <div className="inline-block">
       <button
         onClick={isListening ? handleStop : handleStart}
         className={`btn-ghost ${isListening ? 'bg-red-50 text-red-600' : ''} ${className}`}

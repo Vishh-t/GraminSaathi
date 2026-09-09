@@ -62,11 +62,11 @@ export default function TopNav({ subtitle }) {
           {/* Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
-              onClick={() => navigate('/discovery')}
+              onClick={() => navigate('/reports')}
               className="hidden sm:inline-flex btn-primary !min-h-0 !py-2 text-sm items-center gap-1.5"
             >
               <FileText className="w-4 h-4" />
-              <span>Generate Report</span>
+              <span>View Reports</span>
             </button>
             <div className="hidden lg:block">
               <LanguageToggle />

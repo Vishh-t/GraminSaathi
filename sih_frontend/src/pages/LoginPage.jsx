@@ -143,7 +143,7 @@ export default function LoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder={t('auth.enterEmail')}
-                  className={`input-field pl-10 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-field pl-10 pr-11 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                   disabled={isLoading}
                 />
                 <VoiceButton

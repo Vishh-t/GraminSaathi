@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { referenceAPI, analysisAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import TopNav from '../components/TopNav';
+import Select from '../components/Select';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage } from '../utils/errors';
 import { Loader2, Target, TrendingUp, DollarSign, Calculator } from 'lucide-react';
@@ -64,16 +65,13 @@ export default function GoalSeekPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('goalSeek.categoryLabel')}</label>
-              <select
+              <Select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input-field"
+                onChange={setSelectedCategory}
                 disabled={loading}
-              >
-                {categories.map(c => (
-                  <option key={c.categoryName} value={c.categoryName}>{c.categoryName}</option>
-                ))}
-              </select>
+                placeholder="Select a business"
+                options={categories.map(c => ({ value: c.categoryName, label: c.categoryName }))}
+              />
             </div>
 
             <div>

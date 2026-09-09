@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import TopNav from '../components/TopNav';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage, getErrorMessageFromBlob } from '../utils/errors';
-import { Loader2, FileText, Download, Eye, Calendar, MapPin, Briefcase, DollarSign, FileBarChart, TrendingUp } from 'lucide-react';
+import { Loader2, FileText, Download, Eye, Calendar, MapPin, Briefcase, DollarSign, FileBarChart, TrendingUp, PlusCircle } from 'lucide-react';
 
 export default function ReportsPage() {
   const { t, language } = useI18n();
@@ -116,7 +116,16 @@ export default function ReportsPage() {
               <p className="text-2xl font-bold text-gray-900">{mostViable}</p>
             </div>
           </div>
-          <div className="hidden lg:block rounded-lg overflow-hidden bg-gradient-to-br from-primary-700 to-primary-500 h-full min-h-[76px]" />
+          <button
+            onClick={() => navigate('/discovery')}
+            className="hidden lg:flex flex-col justify-between text-left rounded-xl overflow-hidden bg-gradient-to-br from-primary-700 to-primary-500 h-full min-h-[76px] p-4 group hover:shadow-md transition-shadow"
+          >
+            <PlusCircle className="w-5 h-5 text-white/90" />
+            <div>
+              <p className="text-white font-semibold text-sm">Start New Analysis</p>
+              <p className="text-primary-100 text-xs">Explore another business idea</p>
+            </div>
+          </button>
         </div>
 
         <div className="card !p-0 overflow-hidden">

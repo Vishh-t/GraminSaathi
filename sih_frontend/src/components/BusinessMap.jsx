@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { formatNumber } from '../utils/format';
+import { ImageOff } from 'lucide-react';
 
 // Fix for Leaflet default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -34,6 +35,25 @@ const CompetitorMarker = ({ position }) => (
   </Marker>
 );
 
+// MapContainer's `center`/`zoom` props are only read once, on mount —
+// react-leaflet does NOT re-pan the view when they change on a later render
+// (that's Leaflet's own design: the map is an imperative, stateful widget
+// wrapped in a thin React shell). Without this, switching the village
+// dropdown would move the markers but leave the viewport stuck on whichever
+// village loaded first. This child renders nothing; it just reaches into the
+// live Leaflet map instance via useMap() and flies the camera whenever the
+// target coordinates change.
+function MapRecenter({ center, zoom }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1.1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center[0], center[1]]);
+
+  return null;
+}
+
 function generateCompetitorPositions(center, count, seed) {
   const positions = [];
   // Simple seeded random for consistent positions
@@ -54,103 +74,60 @@ function generateCompetitorPositions(center, count, seed) {
   return positions;
 }
 
+// Headless map surface — intentionally has no card chrome, title, legend, or
+// disclaimer of its own. The parent page owns that framing so we don't end up
+// with two overlapping legends/disclaimers stacked on top of each other.
 export default function BusinessMap({ village, competitorCount, className = '' }) {
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [tileError, setTileError] = useState(false);
   const mapRef = useRef(null);
 
   const center = [village.latitude, village.longitude];
   const competitorPositions = generateCompetitorPositions(center, competitorCount, village.villageName.length * 1000);
 
-  useEffect(() => {
-    if (mapRef.current) {
-      setTimeout(() => mapRef.current.invalidateSize(), 100);
-    }
-  }, [mapLoaded]);
+  if (tileError) {
+    return (
+      <div className={`h-full min-h-[420px] flex items-center justify-center bg-gray-50 ${className}`}>
+        <div className="text-center text-gray-500 p-4">
+          <ImageOff className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+          <p className="mb-2">Unable to load map tiles</p>
+          <p className="text-sm">Map requires internet connection</p>
+          <button onClick={() => setTileError(false)} className="mt-2 btn-primary text-sm">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`card ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        Local Business Map
-      </h3>
-
-      {!mapLoaded && !tileError ? (
-        <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg">
-          <div className="text-center text-gray-500">
-            <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <p>Loading map...</p>
-          </div>
-        </div>
-      ) : tileError ? (
-        <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg">
-          <div className="text-center text-gray-500 p-4">
-            <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p className="mb-2">Unable to load map tiles</p>
-            <p className="text-sm">Map requires internet connection</p>
-            <button onClick={() => { setTileError(false); setMapLoaded(false); }} className="mt-2 btn-primary text-sm">
-              Retry
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="relative h-96 rounded-lg overflow-hidden">
-          <MapContainer
-            ref={mapRef}
-            center={center}
-            zoom={13}
-            scrollWheelZoom={true}
-            whenCreated={() => setMapLoaded(true)}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              onLoad={() => {}}
-              onError={() => setTileError(true)}
-            />
-            <VillageMarker position={center} village={village} />
-            {competitorPositions.map((pos, i) => (
-              <CompetitorMarker key={i} position={pos} />
-            ))}
-            <Circle
-              center={center}
-              radius={5000}
-              color="#16a34a"
-              fillColor="#16a34a"
-              fillOpacity={0.05}
-              weight={1}
-              dashArray="5, 5"
-            />
-          </MapContainer>
-          
-          {/* Legend */}
-          <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-sm" />
-              <span className="text-sm font-medium">Village Center</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-sm" />
-              <span className="text-sm font-medium">{competitorCount} Competitors</span>
-            </div>
-          </div>
-
-          {/* Disclaimer */}
-          <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-2 z-10 max-w-xs">
-            <p className="text-xs text-gray-600 text-center">
-              ⚠️ Competitor positions are illustrative — not real GPS locations
-            </p>
-          </div>
-        </div>
-      )}
+    <div className={`h-full min-h-[420px] ${className}`}>
+      <MapContainer
+        ref={mapRef}
+        center={center}
+        zoom={13}
+        scrollWheelZoom={true}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          eventHandlers={{ tileerror: () => setTileError(true) }}
+        />
+        <MapRecenter center={center} zoom={13} />
+        <VillageMarker position={center} village={village} />
+        {competitorPositions.map((pos, i) => (
+          <CompetitorMarker key={i} position={pos} />
+        ))}
+        <Circle
+          center={center}
+          radius={5000}
+          color="#16a34a"
+          fillColor="#16a34a"
+          fillOpacity={0.05}
+          weight={1}
+          dashArray="5, 5"
+        />
+      </MapContainer>
     </div>
   );
 }

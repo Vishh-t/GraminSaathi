@@ -7,14 +7,21 @@ import { useVoice, extractEntities } from '../hooks/useVoice';
 import VoiceButton from '../components/VoiceButton';
 import TopNav from '../components/TopNav';
 import { formatCurrency } from '../utils/format';
-import { Send, MessageSquare, Mic, Paperclip, TrendingUp, CloudRain } from 'lucide-react';
+import {
+  Send, MessageSquare, Mic, TrendingUp, CloudRain,
+  Search, Wallet, LineChart, Target, ArrowRight, Sparkles,
+} from 'lucide-react';
 
-const quickReplies = [
-  { key: 'findBusiness', icon: '🔍', action: 'discovery' },
-  { key: 'checkLoan', icon: '💰', action: 'analysis' },
-  { key: 'analyzeBusiness', icon: '📊', action: 'analysis' },
-  { key: 'setGoal', icon: '🎯', action: 'goal-seek' },
-  { key: 'talkToAI', icon: '🎙️', action: 'voice' },
+const stripEmoji = (str) => str.replace(/^[^\sA-Za-z\u0900-\u097F]+\s*/u, '');
+
+// The primary action is deliberately visually heavier than the rest — it's the
+// natural first step for a first-time visitor (find a business before anything
+// else can be evaluated). The remaining four are secondary, equal-weight entries.
+const secondaryActions = [
+  { key: 'checkLoan', icon: Wallet, action: 'analysis' },
+  { key: 'analyzeBusiness', icon: LineChart, action: 'simulator' },
+  { key: 'setGoal', icon: Target, action: 'goal-seek' },
+  { key: 'talkToAI', icon: Mic, action: 'voice' },
 ];
 
 export default function DashboardPage() {
@@ -44,6 +51,9 @@ export default function DashboardPage() {
       case 'goal-seek':
         navigate('/goal-seek');
         break;
+      case 'simulator':
+        navigate('/simulator');
+        break;
       case 'voice':
         startListening();
         break;
@@ -60,14 +70,14 @@ export default function DashboardPage() {
     setIsLoading(true);
 
     setTimeout(() => {
-      let response = "I can help you with that! Please use the quick reply buttons or visit the specific pages for detailed analysis.";
+      let response = "I can help you with that! Please use the quick actions above or visit the specific pages for detailed analysis.";
 
       if (message.toLowerCase().includes('loan') || message.toLowerCase().includes('emi')) {
-        response = "For loan analysis, please use the 'Check my loan' or 'Analyze a business' buttons, or visit the Analysis page.";
+        response = "For loan analysis, please use 'Check my loan' above, or visit the Analysis page.";
       } else if (message.toLowerCase().includes('business') || message.toLowerCase().includes('start')) {
-        response = "To find the best business for your location, use 'Find best business' or visit the Discovery page.";
+        response = "To find the best business for your location, use 'Find the best business' above, or visit the Discovery page.";
       } else if (message.toLowerCase().includes('goal') || message.toLowerCase().includes('income') || message.toLowerCase().includes('target')) {
-        response = "For income goal planning, use 'Set an income goal' or visit the Goal Seek page.";
+        response = "For income goal planning, use 'Set an income goal' above, or visit the Goal Seek page.";
       }
 
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
@@ -76,12 +86,12 @@ export default function DashboardPage() {
     }, 500);
   };
 
-  const handleVoiceResult = () => {
-    if (transcript) {
-      setInput(transcript);
+  const handleVoiceResult = (spokenText) => {
+    if (spokenText) {
+      setInput(spokenText);
       const villages = ['Ghoti', 'Bilaspur', 'Peddapuram'];
       const categories = ['Dairy', 'Tailoring', 'Retail / Kirana Store', 'Flour Mill'];
-      const entities = extractEntities(transcript, villages, categories);
+      const entities = extractEntities(spokenText, villages, categories);
 
       if (entities.village || entities.category || entities.capital) {
         setPrefillData(entities);
@@ -90,149 +100,188 @@ export default function DashboardPage() {
     }
   };
 
+  const firstName = (user?.fullName || 'Friend').split(' ')[0];
+
   return (
     <div className="min-h-screen bg-[#f9fafb] flex flex-col">
       <TopNav subtitle={t('app.tagline')} />
 
       {/* Greeting Banner */}
-      <div className="relative bg-gradient-to-r from-primary-800 to-primary-600 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.08),transparent_60%)]" />
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                {t('dashboard.welcomeBack')}, {user?.fullName || 'Friend'}!
-              </h2>
-              <p className="text-primary-100 mt-1">{t('dashboard.subtitle')}</p>
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-700 to-primary-600">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-7 sm:py-9">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-white font-semibold text-lg shrink-0">
+                {firstName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">
+                  {t('dashboard.welcomeBack')}, {firstName}
+                </h2>
+                <p className="text-primary-100 text-sm mt-0.5">{t('dashboard.subtitle')}</p>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <span className="pill bg-white/15 text-white backdrop-blur-sm">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> Good Market
+            <div className="flex gap-2 pl-16 sm:pl-0">
+              <span className="pill bg-white/10 text-white border border-white/15">
+                <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Good market conditions
               </span>
-              <span className="pill bg-white/15 text-white backdrop-blur-sm">
-                <CloudRain className="w-3.5 h-3.5 mr-1" /> Rain Expected
+              <span className="pill bg-white/10 text-white border border-white/15">
+                <CloudRain className="w-3.5 h-3.5 mr-1.5" /> Rain expected
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Chat Area */}
-      <main className="flex-1 overflow-hidden flex flex-col max-w-3xl mx-auto w-full p-4">
-        <div className="flex justify-center my-3">
-          <span className="pill bg-surface-container text-gray-500">Today</span>
-        </div>
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        {/* Quick Actions */}
+        <section>
+          <h3 className="text-sm font-semibold text-gray-500 mb-3">Where would you like to start?</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Primary action — visually heavier, spans two columns on desktop */}
+            <button
+              onClick={() => handleQuickReply('discovery')}
+              className="group text-left sm:col-span-2 lg:col-span-2 lg:row-span-2 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-6 flex flex-col justify-between min-h-[168px] shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                <Search className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-lg mt-4">{stripEmoji(t('dashboard.quickReplies.findBusiness'))}</p>
+                <p className="text-primary-100 text-sm mt-1 max-w-sm">{t('dashboard.quickReplies.findBusinessDesc')}</p>
+                <span className="inline-flex items-center gap-1 text-white text-sm font-medium mt-4 group-hover:gap-2 transition-all">
+                  Get started <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </button>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto space-y-4 mb-6" role="log" aria-live="polite">
-          {messages.length === 0 && (
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0 text-white">
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-white border border-gray-200 shadow-sm px-4 py-3">
-                <p className="text-sm text-gray-800">
-                  {t('dashboard.subtitle')}. Try asking about a business idea, a loan, or an income goal — or use a quick reply below.
-                </p>
-              </div>
+            {secondaryActions.map(({ key, icon: Icon, action }) => (
+              <button
+                key={key}
+                onClick={() => handleQuickReply(action)}
+                className="group text-left bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between min-h-[80px] shadow-sm hover:shadow-md hover:border-primary-200 transition-all"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-primary-700" />
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
+                </div>
+                <div>
+                  <p className="text-gray-900 font-medium text-sm mt-3">{stripEmoji(t(`dashboard.quickReplies.${key}`))}</p>
+                  <p className="text-gray-500 text-xs mt-1">{t(`dashboard.quickReplies.${key}Desc`)}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Chat Card */}
+        <section className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100">
+            <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-          )}
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Ask GraminSaathi</p>
+              <p className="text-xs text-gray-500">Type or speak in Hindi, English, or your local language</p>
+            </div>
+          </div>
 
-          {messages.map((msg, index) => (
-            <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              {msg.role === 'bot' && (
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto space-y-4 p-5 h-72 sm:h-80" role="log" aria-live="polite">
+            {messages.length === 0 && (
+              <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0 text-white">
                   <MessageSquare className="w-4 h-4" />
                 </div>
-              )}
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-primary-600 text-white rounded-br-md'
-                  : 'bg-white text-gray-900 border border-gray-200 rounded-tl-md shadow-sm'
-              }`}>
-                <p className="text-sm">{msg.content}</p>
-              </div>
-              {msg.role === 'user' && (
-                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-gray-600 text-xs font-semibold">
-                  {(user?.fullName || 'U').charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-          ))}
-
-          {isLoading && (
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0 text-white">
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <div className="bg-white text-gray-900 border border-gray-200 rounded-tl-md rounded-2xl px-4 py-3 shadow-sm">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-gray-50 border border-gray-200 px-4 py-3">
+                  <p className="text-sm text-gray-700">
+                    Ask about a business idea, a loan, or an income goal — or tap one of the quick actions above.
+                  </p>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Quick Replies */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {quickReplies.map((reply, i) => (
-            <button
-              key={reply.key}
-              onClick={() => handleQuickReply(reply.action)}
-              className={i === 0 ? 'btn-primary !min-h-0 !py-2 text-sm gap-1.5' : 'btn-secondary !py-2 text-sm flex items-center gap-1.5'}
-            >
-              <span>{reply.icon}</span>
-              <span>{t(`dashboard.quickReplies.${reply.key}`).replace(/^[^\sA-Za-z]+\s*/u, '')}</span>
-            </button>
-          ))}
-        </div>
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'bot' && (
+                  <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0 text-white">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                )}
+                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  msg.role === 'user'
+                    ? 'bg-primary-600 text-white rounded-br-md'
+                    : 'bg-gray-50 text-gray-900 border border-gray-200 rounded-tl-md'
+                }`}>
+                  <p className="text-sm">{msg.content}</p>
+                </div>
+                {msg.role === 'user' && (
+                  <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-gray-600 text-xs font-semibold">
+                    {(user?.fullName || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            ))}
 
-        {/* Input Area */}
-        <div className="border-t border-gray-200 pt-4">
-          <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-2xl px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
-            <Paperclip className="w-5 h-5 text-gray-400 shrink-0" />
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-              placeholder={t('dashboard.placeholder')}
-              className="flex-1 outline-none text-sm bg-transparent min-h-[24px]"
-              disabled={isLoading}
-            />
-            <button
-              onClick={handleSend}
-              disabled={isLoading || (!input.trim() && !transcript.trim())}
-              className="p-2 bg-primary-600 text-white rounded-full disabled:opacity-40 hover:bg-primary-700 transition-colors shrink-0"
-              aria-label={t('dashboard.sendTooltip')}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-            <VoiceButton
-              onTranscript={handleVoiceResult}
-              language={language === 'hi' ? 'hi-IN' : 'en-IN'}
-              className="shrink-0"
-            />
+            {isLoading && (
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0 text-white">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <div className="bg-gray-50 text-gray-900 border border-gray-200 rounded-tl-md rounded-2xl px-4 py-3">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-2">You can speak in Hindi, English, or your local language.</p>
-
-          {isListening && (
-            <div className="mt-2 flex items-center justify-center gap-2 text-red-600 text-sm animate-pulse">
-              <Mic className="w-4 h-4" />
-              <span>{t('dashboard.voiceListening')}</span>
+          {/* Input Area */}
+          <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+            <div className="relative flex items-center gap-2 bg-white border border-gray-300 rounded-2xl px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                placeholder={t('dashboard.placeholder')}
+                className="flex-1 outline-none text-sm bg-transparent min-h-[24px] px-1"
+                disabled={isLoading}
+              />
+              <VoiceButton
+                onTranscript={handleVoiceResult}
+                language={language === 'hi' ? 'hi-IN' : 'en-IN'}
+                className="shrink-0 !p-2"
+              />
+              <button
+                onClick={handleSend}
+                disabled={isLoading || (!input.trim() && !transcript.trim())}
+                className="p-2 bg-primary-600 text-white rounded-full disabled:opacity-40 hover:bg-primary-700 transition-colors shrink-0"
+                aria-label={t('dashboard.sendTooltip')}
+              >
+                <Send className="w-4 h-4" />
+              </button>
             </div>
-          )}
 
-          {error && (
-            <div className="mt-2 text-center text-red-600 text-sm">
-              {t('dashboard.voiceError')}
-            </div>
-          )}
-        </div>
+            {isListening && (
+              <div className="mt-2 flex items-center justify-center gap-2 text-red-600 text-sm animate-pulse">
+                <Mic className="w-4 h-4" />
+                <span>{t('dashboard.voiceListening')}</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-2 text-center text-red-600 text-sm">
+                {t('dashboard.voiceError')}
+              </div>
+            )}
+          </div>
+        </section>
       </main>
     </div>
   );

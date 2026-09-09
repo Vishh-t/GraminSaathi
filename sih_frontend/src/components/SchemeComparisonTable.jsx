@@ -40,7 +40,7 @@ export default function SchemeComparisonTable({ schemeComparison, className = ''
                   </div>
                 </td>
                 <td className="p-3 text-right font-medium">
-                  {(scheme.interestRate * 100).toFixed(1)}%
+                  {scheme.interestRate.toFixed(1)}%
                 </td>
                 <td className="p-3 text-right">
                   {scheme.tenureYears} years

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { referenceAPI, analysisAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import TopNav from '../components/TopNav';
+import Select from '../components/Select';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage } from '../utils/errors';
 import { Loader2, TrendingUp, ArrowRight, Target, Store } from 'lucide-react';
@@ -77,18 +78,17 @@ export default function DiscoveryPage() {
 
             <div className="mb-5">
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('discovery.villageLabel')}</label>
-              <select
+              <Select
                 value={selectedVillage}
-                onChange={(e) => setSelectedVillage(e.target.value)}
-                className="input-field"
+                onChange={setSelectedVillage}
                 disabled={loading}
-              >
-                {villages.map(v => (
-                  <option key={v.villageName} value={v.villageName}>
-                    {v.villageName}, {v.block}, {v.district}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select a village"
+                options={villages.map(v => ({
+                  value: v.villageName,
+                  label: v.villageName,
+                  sublabel: `· ${v.block}, ${v.district}`,
+                }))}
+              />
             </div>
 
             <div className="mb-6">

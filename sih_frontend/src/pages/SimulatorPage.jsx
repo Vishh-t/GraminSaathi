@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { analysisAPI, referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import TopNav from '../components/TopNav';
+import Select from '../components/Select';
 import SurvivalChart from '../components/SurvivalChart';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage } from '../utils/errors';
@@ -116,29 +117,23 @@ export default function SimulatorPage() {
             <div className="space-y-4 mb-5 pb-5 border-b border-gray-100">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('discovery.villageLabel')}</label>
-                <select
+                <Select
                   value={village}
-                  onChange={(e) => { setVillage(e.target.value); handleShockChange(); }}
-                  className="input-field"
+                  onChange={(v) => { setVillage(v); handleShockChange(); }}
                   disabled={loading}
-                >
-                  {villages.map(v => (
-                    <option key={v.villageName} value={v.villageName}>{v.villageName}</option>
-                  ))}
-                </select>
+                  placeholder="Select a village"
+                  options={villages.map(v => ({ value: v.villageName, label: v.villageName }))}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('goalSeek.categoryLabel')}</label>
-                <select
+                <Select
                   value={category}
-                  onChange={(e) => { setCategory(e.target.value); handleShockChange(); }}
-                  className="input-field"
+                  onChange={(v) => { setCategory(v); handleShockChange(); }}
                   disabled={loading}
-                >
-                  {categories.map(c => (
-                    <option key={c.categoryName} value={c.categoryName}>{c.categoryName}</option>
-                  ))}
-                </select>
+                  placeholder="Select a business"
+                  options={categories.map(c => ({ value: c.categoryName, label: c.categoryName }))}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('discovery.capitalLabel')}</label>

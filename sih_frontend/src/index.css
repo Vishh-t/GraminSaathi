@@ -41,6 +41,19 @@
   --color-danger-700: #b91c1c;
   --color-danger-800: #991b1b;
   --color-danger-900: #7f1d1d;
+
+  --animate-fade-in: fade-in 0.15s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @layer base {
@@ -57,61 +70,89 @@
   }
 }
 
-/* Custom utilities as regular CSS classes */
-.btn-primary {
-  @apply bg-primary-600 text-white px-4 py-2.5 min-h-[48px] rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center;
-}
+/* Custom component classes live inside @layer components. This matters:
+   Tailwind's cascade layers put "components" BELOW "utilities" in priority,
+   so a utility class written directly on an element (e.g. pl-10, pr-11) can
+   still override a property set here (e.g. px-4). Without this @layer
+   wrapper, these rules are "unlayered" CSS, which browsers always treat as
+   higher priority than ANY layered Tailwind utility — meaning things like
+   pl-10 on an input would silently lose to this file's own px-4, no matter
+   which one appears later in the markup. That mismatch was the actual cause
+   of icons overlapping input text across the site. */
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 text-white px-4 py-2.5 min-h-[48px] rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center;
+  }
 
-.btn-secondary {
-  @apply bg-white text-primary-600 border border-primary-600 px-4 py-2 rounded-lg font-medium hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors;
-}
+  .btn-secondary {
+    @apply bg-white text-primary-600 border border-primary-600 px-4 py-2 rounded-lg font-medium hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-.btn-danger {
-  @apply bg-danger-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-danger-700 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2 transition-colors;
-}
+  .btn-danger {
+    @apply bg-danger-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-danger-700 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-.btn-ghost {
-  @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg font-medium transition-colors;
-}
+  .btn-ghost {
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-.input-field {
-  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow;
-}
+  .input-field {
+    @apply w-full px-4 py-2.5 min-h-[46px] border border-gray-300 rounded-xl text-gray-900 bg-white
+      placeholder:text-gray-400
+      hover:border-gray-400
+      focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+      disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:border-gray-300
+      transition-colors duration-150;
+  }
 
-.card {
-  @apply bg-white rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-gray-200 p-6;
-}
+  /* Custom chevron for <select> so it matches the rest of the design system
+     instead of the raw OS-default dropdown arrow. */
+  select.input-field {
+    @apply appearance-none bg-no-repeat pr-10 cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-position: right 0.85rem center;
+    background-size: 1.1em 1.1em;
+  }
 
-.nav-link {
-  @apply px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors;
-}
+  select.input-field:disabled {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23d1d5db' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  }
 
-.nav-link-active {
-  @apply px-4 py-2 rounded-lg text-sm font-medium text-primary-700 bg-primary-100;
-}
+  .card {
+    @apply bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] border border-gray-200 p-6;
+  }
 
-.pill {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
-}
+  .nav-link {
+    @apply px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors;
+  }
 
-.badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-}
+  .nav-link-active {
+    @apply px-4 py-2 rounded-lg text-sm font-medium text-primary-700 bg-primary-100;
+  }
 
-.badge-success {
-  @apply bg-green-100 text-green-800;
-}
+  .pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
 
-.badge-warning {
-  @apply bg-warning-100 text-warning-800;
-}
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
 
-.badge-danger {
-  @apply bg-danger-100 text-danger-800;
-}
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
 
-.badge-info {
-  @apply bg-blue-100 text-blue-800;
+  .badge-warning {
+    @apply bg-warning-100 text-warning-800;
+  }
+
+  .badge-danger {
+    @apply bg-danger-100 text-danger-800;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
 }
 
 .text-balance {

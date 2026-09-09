@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { analysisAPI, reportsAPI } from '../services/api';
+import { analysisAPI, reportsAPI, referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import { useAuth } from '../context/AuthContext';
 import TopNav from '../components/TopNav';
+import Select from '../components/Select';
 import OpportunityScoreCard from '../components/OpportunityScoreCard';
 import LoanComparisonCard from '../components/LoanComparisonCard';
 import DSCRIndicator from '../components/DSCRIndicator';
@@ -18,7 +19,7 @@ import FailureBoundary from '../components/FailureBoundary';
 import SchemeComparisonTable from '../components/SchemeComparisonTable';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage, getErrorMessageFromBlob } from '../utils/errors';
-import { Loader2, FileText, MapPin, BarChart2, Download, Save, Lightbulb } from 'lucide-react';
+import { Loader2, FileText, MapPin, BarChart2, Download, Save, Lightbulb, Building2, Wallet, Search } from 'lucide-react';
 
 const tabs = [
   { id: 'overview', label: 'analysis.tabs.overview' },
@@ -34,23 +35,60 @@ export default function AnalysisPage() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const village = searchParams.get('village');
   const category = searchParams.get('category');
   const capital = searchParams.get('capital');
+  const hasParams = Boolean(village && category && capital);
+
+  // Reference data + a small inline form so this page can be a real starting
+  // point on its own, not just a screen that only ever renders when Discovery
+  // (or Map/Dashboard) has already handed it a fully-formed deep link.
+  const [villages, setVillages] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [refLoading, setRefLoading] = useState(true);
+  const [formVillage, setFormVillage] = useState(village || '');
+  const [formCategory, setFormCategory] = useState(category || '');
+  const [formCapital, setFormCapital] = useState(capital || '');
 
   useEffect(() => {
-    if (village && category && capital) {
+    loadReferenceData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (village) setFormVillage(village);
+    if (category) setFormCategory(category);
+    if (capital) setFormCapital(capital);
+  }, [village, category, capital]);
+
+  useEffect(() => {
+    if (hasParams) {
       loadAnalysis();
-    } else {
-      setError('Missing required parameters');
-      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [village, category, capital]);
+
+  const loadReferenceData = async () => {
+    setRefLoading(true);
+    try {
+      const [vRes, cRes] = await Promise.all([
+        referenceAPI.getVillages(),
+        referenceAPI.getBusinessCategories(),
+      ]);
+      setVillages(vRes.data);
+      setCategories(cRes.data);
+      setFormVillage(prev => prev || village || vRes.data[0]?.villageName || '');
+      setFormCategory(prev => prev || category || cRes.data[0]?.categoryName || '');
+    } catch (err) {
+      console.error('Failed to load reference data:', err);
+    } finally {
+      setRefLoading(false);
+    }
+  };
 
   const loadAnalysis = async () => {
     setLoading(true);
@@ -117,6 +155,91 @@ export default function AnalysisPage() {
     navigate(`/simulator?village=${village}&category=${category}&capital=${capital}`);
   };
 
+  const handleRunAnalysis = (e) => {
+    e.preventDefault();
+    if (!formVillage || !formCategory || !formCapital) return;
+    navigate(`/analysis?village=${formVillage}&category=${formCategory}&capital=${formCapital}`);
+  };
+
+  // No village/category/capital yet — this is now a real landing state with
+  // its own working form, not a dead end that only points back to Discovery.
+  if (!hasParams) {
+    return (
+      <div className="min-h-screen bg-[#f9fafb]">
+        <TopNav subtitle="Business Advisory" />
+        <main className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-7 h-7 text-primary-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('analysis.title')}</h2>
+            <p className="text-gray-500 mt-1">{t('analysis.subtitle')}</p>
+          </div>
+
+          <form onSubmit={handleRunAnalysis} className="card space-y-5">
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
+                <MapPin className="w-3.5 h-3.5 text-primary-600" />
+                {t('discovery.villageLabel')}
+              </label>
+              <Select
+                value={formVillage}
+                onChange={setFormVillage}
+                disabled={refLoading}
+                placeholder="Select a village"
+                options={villages.map(v => ({ value: v.villageName, label: v.villageName }))}
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
+                <Building2 className="w-3.5 h-3.5 text-primary-600" />
+                {t('goalSeek.categoryLabel')}
+              </label>
+              <Select
+                value={formCategory}
+                onChange={setFormCategory}
+                disabled={refLoading}
+                placeholder="Select a business"
+                options={categories.map(c => ({ value: c.categoryName, label: c.categoryName }))}
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
+                <Wallet className="w-3.5 h-3.5 text-primary-600" />
+                {t('discovery.capitalLabel')}
+              </label>
+              <input
+                type="number"
+                value={formCapital}
+                onChange={(e) => setFormCapital(e.target.value)}
+                placeholder={t('discovery.capitalPlaceholder')}
+                className="input-field"
+                min="1000"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={refLoading || !formVillage || !formCategory || !formCapital}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
+              <BarChart2 className="w-5 h-5" />
+              Run Analysis
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-400 mt-6">
+            Not sure yet? <button onClick={() => navigate('/discovery')} className="text-primary-600 hover:underline font-medium inline-flex items-center gap-1">
+              <Search className="w-3.5 h-3.5" />Browse business ideas in Discovery
+            </button> instead.
+          </p>
+        </main>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
@@ -134,18 +257,12 @@ export default function AnalysisPage() {
         <TopNav subtitle="Business Advisory" />
         <div className="max-w-xl mx-auto px-4 py-20 text-center">
           <FileText className="w-14 h-14 mx-auto text-gray-300 mb-4" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            {village && category && capital ? (error || 'Failed to load analysis') : 'Pick a business to analyze first'}
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">{error || 'Failed to load analysis'}</h2>
           <p className="text-gray-500 mb-6">
-            {village && category && capital
-              ? "We couldn't load this analysis. The backend may be unreachable, or check the console for details."
-              : 'Analysis needs a village, business type, and available capital. Start from Discovery to pick one.'}
+            We couldn't load this analysis. The backend may be unreachable, or check the console for details.
           </p>
           <div className="flex items-center justify-center gap-3">
-            {village && category && capital && (
-              <button onClick={loadAnalysis} className="btn-secondary">{t('common.retry')}</button>
-            )}
+            <button onClick={loadAnalysis} className="btn-secondary">{t('common.retry')}</button>
             <button onClick={() => navigate('/discovery')} className="btn-primary">Go to Discovery</button>
           </div>
         </div>
