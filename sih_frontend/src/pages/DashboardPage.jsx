@@ -14,6 +14,58 @@ import {
 
 const stripEmoji = (str) => str.replace(/^[^\sA-Za-z\u0900-\u097F]+\s*/u, '');
 
+// Lightweight keyword-based intent routing for the chat box. This is
+// deliberately simple (no backend NLU call) — it's meant to feel responsive
+// for a demo, not to be a real intent classifier. Order matters: more
+// specific/rarer keywords are checked first so e.g. "income goal" doesn't
+// accidentally get swallowed by a broader match.
+//
+// Devanagari terms are matched as plain substrings (no \b word-boundary
+// wrapping) because JS regex \b is defined in terms of \w ([A-Za-z0-9_]),
+// which doesn't recognize Devanagari characters as "word" characters at all
+// — wrapping them in \b...\b would silently never match.
+function detectIntent(message) {
+  const m = message.toLowerCase();
+
+  const GOAL = /\b(goal|income target|target income|earn \u20b9|monthly income)\b/;
+  const GOAL_HI = /\u0932\u0915\u094d\u0937\u094d\u092f|\u0906\u092e\u0926\u0928\u0940|\u0915\u092e\u093e\u0908/;
+
+  const MAP = /\b(map|competitor|nearby|location)\b/;
+  const MAP_HI = /\u0928\u0915\u094d\u0936\u093e|\u092a\u094d\u0930\u0924\u093f\u0938\u094d\u092a\u0930\u094d\u0927\u0940|\u0928\u091c\u093c\u0926\u0940\u0915/;
+
+  const REPORT = /\b(report|pdf|download|saved)\b/;
+  const REPORT_HI = /\u0930\u093f\u092a\u094b\u0930\u094d\u091f|\u0921\u093e\u0909\u0928\u0932\u094b\u0921/;
+
+  const SIMULATE = /\b(simulat|survive|survival|what if|shock)\b/;
+  const SIMULATE_HI = /\u0938\u093f\u092e\u0941\u0932\u0947\u0936\u0928|\u092e\u0902\u0926\u0940|\u091c\u094b\u0916\u093f\u092e/;
+
+  const LOAN = /\b(loan|emi|borrow|credit|finance|interest rate|scheme)\b/;
+  const LOAN_HI = /\u0932\u094b\u0928|\u0915\u0930\u094d\u095b|\u090b\u0923|\u092c\u094d\u092f\u093e\u091c|\u092f\u094b\u091c\u0928\u093e|\u0908\u090f\u092e\u0906\u0908/;
+
+  const BUSINESS = /\b(business|start|idea|discover|shop|open a)\b/;
+  const BUSINESS_HI = /\u0935\u094d\u092f\u0935\u0938\u093e\u092f|\u092c\u093f\u091c\u0928\u0947\u0938|\u0927\u0902\u0927|\u0926\u0941\u0915\u093e\u0928|\u0906\u0908\u0921\u093f\u092f\u093e|\u0922\u0942\u0902\u0922/;
+
+  if (GOAL.test(m) || GOAL_HI.test(message)) {
+    return { path: '/goal-seek', label: 'Goal Seek', labelHi: '\u0906\u092f \u0932\u0915\u094d\u0937\u094d\u092f \u0928\u093f\u0930\u094d\u0927\u093e\u0930\u0923' };
+  }
+  if (MAP.test(m) || MAP_HI.test(message)) {
+    return { path: '/map', label: 'the Map', labelHi: '\u0928\u0915\u094d\u0936\u0947' };
+  }
+  if (REPORT.test(m) || REPORT_HI.test(message)) {
+    return { path: '/reports', label: 'your Reports', labelHi: '\u0930\u093f\u092a\u094b\u0930\u094d\u091f\u094d\u0938' };
+  }
+  if (SIMULATE.test(m) || SIMULATE_HI.test(message)) {
+    return { path: '/simulator', label: 'the Survival Simulator', labelHi: '\u0938\u0930\u094d\u0935\u093e\u0907\u0935\u0932 \u0938\u093f\u092e\u0941\u0932\u0947\u0936\u0928' };
+  }
+  if (LOAN.test(m) || LOAN_HI.test(message)) {
+    return { path: '/analysis', label: 'Loan Analysis', labelHi: '\u0932\u094b\u0928 \u0935\u093f\u0936\u094d\u0932\u0947\u0937\u0923' };
+  }
+  if (BUSINESS.test(m) || BUSINESS_HI.test(message)) {
+    return { path: '/discovery', label: 'Business Discovery', labelHi: '\u092c\u093f\u091c\u0928\u0947\u0938 \u0921\u093f\u0938\u094d\u0915\u0935\u0930\u0940' };
+  }
+  return null;
+}
+
 // The primary action is deliberately visually heavier than the rest — it's the
 // natural first step for a first-time visitor (find a business before anything
 // else can be evaluated). The remaining four are secondary, equal-weight entries.
@@ -69,20 +121,23 @@ export default function DashboardPage() {
     clearTranscript();
     setIsLoading(true);
 
-    setTimeout(() => {
-      let response = "I can help you with that! Please use the quick actions above or visit the specific pages for detailed analysis.";
+    const intent = detectIntent(message);
 
-      if (message.toLowerCase().includes('loan') || message.toLowerCase().includes('emi')) {
-        response = "For loan analysis, please use 'Check my loan' above, or visit the Analysis page.";
-      } else if (message.toLowerCase().includes('business') || message.toLowerCase().includes('start')) {
-        response = "To find the best business for your location, use 'Find the best business' above, or visit the Discovery page.";
-      } else if (message.toLowerCase().includes('goal') || message.toLowerCase().includes('income') || message.toLowerCase().includes('target')) {
-        response = "For income goal planning, use 'Set an income goal' above, or visit the Goal Seek page.";
-      }
+    setTimeout(() => {
+      const response = intent
+        ? (language === 'hi' ? `\u0920\u0940\u0915 \u0939\u0948, \u0906\u092a\u0915\u094b ${intent.labelHi} \u092a\u0930 \u0932\u0947 \u091c\u093e \u0930\u0939\u0947 \u0939\u0948\u0902...` : `Sure, taking you to ${intent.label}...`)
+        : (language === 'hi' ? '\u092e\u0948\u0902 \u0906\u092a\u0915\u0940 \u092e\u0926\u0926 \u0915\u0930 \u0938\u0915\u0924\u093e \u0939\u0942\u0902! \u0915\u0943\u092a\u092f\u093e \u090a\u092a\u0930 \u0926\u093f\u090f \u0917\u090f \u0915\u094d\u0935\u093f\u0915 \u090f\u0915\u094d\u0936\u0928 \u0915\u093e \u0909\u092a\u092f\u094b\u0917 \u0915\u0930\u0947\u0902\u0964' : "I can help you with that! Please use the quick actions above or visit the specific pages for detailed analysis.");
 
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
       speak(response, language === 'hi' ? 'hi-IN' : 'en-IN');
       setIsLoading(false);
+
+      // Small delay after the bot's reply so the person actually sees the
+      // acknowledgement before the page changes out from under them, instead
+      // of the chat message flashing and instantly vanishing.
+      if (intent) {
+        setTimeout(() => navigate(intent.path), 700);
+      }
     }, 500);
   };
 

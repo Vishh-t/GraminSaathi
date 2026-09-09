@@ -6,7 +6,7 @@ import TopNav from '../components/TopNav';
 import Select from '../components/Select';
 import BusinessMap from '../components/BusinessMap';
 import { Loader2, MapPin, Building2, BarChart2, AlertTriangle, SlidersHorizontal, RotateCcw, Users } from 'lucide-react';
-import { formatNumber } from '../utils/format';
+import { formatNumber, formatCurrency } from '../utils/format';
 import { getErrorMessage } from '../utils/errors';
 
 export default function MapPage() {
@@ -260,7 +260,7 @@ export default function MapPage() {
                     {businessData.avgLocalPrice && (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Avg Local Price</span>
-                        <span className="font-medium">₹{businessData.avgLocalPrice}</span>
+                        <span className="font-medium">{formatCurrency(businessData.avgLocalPrice)}</span>
                       </div>
                     )}
                   </div>
