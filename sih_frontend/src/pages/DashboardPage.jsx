@@ -7,9 +7,11 @@ import { useVoice, extractEntities } from '../hooks/useVoice';
 import VoiceButton from '../components/VoiceButton';
 import TopNav from '../components/TopNav';
 import { formatCurrency } from '../utils/format';
+import { dashboardHeroImage } from '../assets/dashboardHeroImage';
 import {
   Send, MessageSquare, Mic, TrendingUp, CloudRain,
   Search, Wallet, LineChart, Target, ArrowRight, Sparkles,
+  PiggyBank, HeartHandshake,
 } from 'lucide-react';
 
 const stripEmoji = (str) => str.replace(/^[^\sA-Za-z\u0900-\u097F]+\s*/u, '');
@@ -158,7 +160,22 @@ export default function DashboardPage() {
   const firstName = (user?.fullName || 'Friend').split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] flex flex-col">
+    <div className="min-h-screen bg-[#f9fafb] flex flex-col relative isolate overflow-hidden">
+      {/* Subtle decorative background — a single composited layer (fade + photo)
+          instead of two stacked opacities, which were multiplying down to
+          near-zero and rendering as effectively invisible. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(249,250,251,0.92) 0%, rgba(249,250,251,0.72) 35%, rgba(249,250,251,0.72) 65%, rgba(249,250,251,0.94) 100%), url(${dashboardHeroImage})`,
+          backgroundSize: 'cover, cover',
+          backgroundPosition: 'center, center 35%',
+          backgroundRepeat: 'no-repeat, no-repeat',
+          filter: 'grayscale(20%)',
+        }}
+      />
+
       <TopNav subtitle={t('app.tagline')} />
 
       {/* Greeting Banner */}
@@ -228,6 +245,49 @@ export default function DashboardPage() {
                 </div>
               </button>
             ))}
+          </div>
+        </section>
+
+        {/* Financial Tools */}
+        <section>
+          <h3 className="text-sm font-semibold text-gray-500 mb-3">Manage your money</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <a
+              href="https://spend-smart-one-beta.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between min-h-[128px] shadow-sm hover:shadow-md hover:border-primary-200 transition-all"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                  <PiggyBank className="w-4 h-4 text-primary-700" />
+                </div>
+                <span className="pill bg-primary-50 text-primary-700 border border-primary-100 text-[10px]">UPI friendly</span>
+              </div>
+              <div>
+                <p className="text-gray-900 font-medium text-sm mt-3">Track expenses with Expenzo</p>
+                <p className="text-gray-500 text-xs mt-1">Log your daily spends, see where money goes, and move to UPI for safer, trackable payments.</p>
+              </div>
+              <span className="inline-flex items-center gap-1 text-primary-700 text-sm font-medium mt-3 group-hover:gap-2 transition-all">
+                Open Expenzo <ArrowRight className="w-4 h-4" />
+              </span>
+            </a>
+
+            <button
+              onClick={() => navigate('/connect-ngo')}
+              className="group text-left bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between min-h-[128px] shadow-sm hover:shadow-md hover:border-primary-200 transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                <HeartHandshake className="w-4 h-4 text-primary-700" />
+              </div>
+              <div>
+                <p className="text-gray-900 font-medium text-sm mt-3">Connect with an NGO</p>
+                <p className="text-gray-500 text-xs mt-1">Get support from partner NGOs for training, documentation help, and mentorship.</p>
+              </div>
+              <span className="inline-flex items-center gap-1 text-primary-700 text-sm font-medium mt-3 group-hover:gap-2 transition-all">
+                Explore <ArrowRight className="w-4 h-4" />
+              </span>
+            </button>
           </div>
         </section>
 
