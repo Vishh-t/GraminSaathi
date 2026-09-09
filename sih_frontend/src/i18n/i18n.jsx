@@ -1,8 +1,21 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import en from './en.json';
 import hi from './hi.json';
+import gu from './gu.json';
+import mr from './mr.json';
+import ta from './ta.json';
+import te from './te.json';
 
-const translations = { en, hi };
+const translations = { en, hi, gu, mr, ta, te };
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en', labelKey: 'language.english' },
+  { code: 'hi', labelKey: 'language.hindi' },
+  { code: 'gu', labelKey: 'language.gujarati' },
+  { code: 'mr', labelKey: 'language.marathi' },
+  { code: 'ta', labelKey: 'language.tamil' },
+  { code: 'te', labelKey: 'language.telugu' },
+];
 
 const I18nContext = createContext(null);
 
