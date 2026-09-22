@@ -76,6 +76,26 @@ public class PdfGeneratorService {
         return "Rs. " + INDIAN_NUMBER_FORMAT.format(amount);
     }
 
+    /**
+     * Makes any dynamic string safe for the standard PDF fonts used here (Helvetica,
+     * WinAnsiEncoding/cp1252): replaces ₹ with "Rs." and falls back to "?" for any other
+     * character outside the single-byte range PDFBox's Standard14 fonts can render, rather
+     * than crashing. Unlike scheme names and agencies (already cp1252-clean per the dataset
+     * check), notes and free-text fields aren't guaranteed to be, so every dynamic string
+     * drawn into the report goes through this first - always BEFORE any width measurement
+     * against it, since replacing ₹ (1 char) with "Rs." (3 chars) changes the string's width.
+     */
+    private static String sanitizeForPdf(String text) {
+        if (text == null) return "";
+        String replaced = text.replace("\u20B9", "Rs.");
+        StringBuilder sb = new StringBuilder(replaced.length());
+        for (int i = 0; i < replaced.length(); i++) {
+            char c = replaced.charAt(i);
+            sb.append(c <= 0xFF ? c : '?');
+        }
+        return sb.toString();
+    }
+
     private float yPosition;
     private PDPageContentStream contentStream;
     private PDPage page;
@@ -189,9 +209,10 @@ public class PdfGeneratorService {
 
     private void addDetailRow(String label, String value) throws IOException {
         newPageIfNeeded(LINE_HEIGHT * 2);
+        String safeValue = sanitizeForPdf(value);
         writeText(label + ": ", BOLD_FONT, 10, PAGE_MARGIN, yPosition);
         float labelWidth = BOLD_FONT.getStringWidth(label + ": ") / 1000 * 10;
-        writeText(value, BODY_FONT, 10, PAGE_MARGIN + labelWidth, yPosition);
+        writeText(safeValue, BODY_FONT, 10, PAGE_MARGIN + labelWidth, yPosition);
         yPosition -= LINE_HEIGHT;
     }
 
@@ -210,13 +231,13 @@ public class PdfGeneratorService {
 
     private void addBodyText(String text) throws IOException {
         newPageIfNeeded(LINE_HEIGHT);
-        writeText(text, BODY_FONT, 10, PAGE_MARGIN, yPosition);
+        writeText(sanitizeForPdf(text), BODY_FONT, 10, PAGE_MARGIN, yPosition);
         yPosition -= LINE_HEIGHT;
     }
 
     private void addBodyText(String text, PDFont font, float fontSize) throws IOException {
         newPageIfNeeded(LINE_HEIGHT);
-        writeText(text, font, fontSize, PAGE_MARGIN, yPosition);
+        writeText(sanitizeForPdf(text), font, fontSize, PAGE_MARGIN, yPosition);
         yPosition -= LINE_HEIGHT;
     }
 
@@ -253,10 +274,11 @@ public class PdfGeneratorService {
     }
 
     private void addWrappedText(String text, PDFont font, float fontSize, float x, float y, float maxWidth) throws IOException {
+        String safeText = sanitizeForPdf(text);
         float charWidth = font.getStringWidth("a") / 1000 * fontSize;
         int charsPerLine = (int) (maxWidth / charWidth);
 
-        String[] words = text.split(" ");
+        String[] words = safeText.split(" ");
         StringBuilder line = new StringBuilder();
         float currentY = y;
 
@@ -333,11 +355,14 @@ public class PdfGeneratorService {
         addSubHeading("Alternative schemes for your project cost:");
 
         String[] headers = new String[]{"Scheme", "Rate (%/yr)", "Tenure (yr)", "Moratorium (mo)", "EMI", "Agency"};
+        // Real scheme names and agencies run far longer than the old 4-scheme fixtures (up to ~77 chars),
+        // so the numeric columns get just enough room for their content and the rest goes to name/agency.
+        float[] weights = {0.30f, 0.11f, 0.10f, 0.13f, 0.14f, 0.22f};
 
         List<List<String>> rows = financial.schemeComparison().stream()
                 .map(s -> List.of(
                         s.getSchemeName() + (s.isPrimary() ? " *" : ""),
-                        String.format("%.1f", s.getInterestRate()),
+                        String.format("%.1f", s.getInterestRate()) + (Boolean.TRUE.equals(s.getRateEstimated()) ? " (est.)" : ""),
                         String.valueOf(s.getTenureYears()),
                         String.valueOf(s.getMoratoriumMonths()),
                         formatINR(s.getEmi()),
@@ -345,16 +370,21 @@ public class PdfGeneratorService {
                 ))
                 .toList();
 
-        drawTable(headers, rows);
+        drawTable(headers, rows, weights);
         yPosition -= 10;
 
-        addBodyText("* = Your matched scheme. PMEGP and Mudra rates are illustrative — verify current terms before applying.", SMALL_FONT, 8);
+        addBodyText("* = Your matched scheme (cheapest option you can afford; see the full analysis for how it was ranked). "
+                + "(est.) = rate estimated from the scheme's stated interest subvention, not fixed by the scheme itself — "
+                + "verify current terms with the implementing agency before applying.", SMALL_FONT, 8);
     }
 
-    private void drawTable(String[] headers, List<List<String>> rows) throws IOException {
+    private void drawTable(String[] headers, List<List<String>> rows, float[] weights) throws IOException {
         float tableWidth = page.getMediaBox().getWidth() - 2 * PAGE_MARGIN;
         int colCount = headers.length;
-        float colWidth = tableWidth / colCount;
+        float[] colWidths = new float[colCount];
+        for (int i = 0; i < colCount; i++) {
+            colWidths[i] = tableWidth * weights[i];
+        }
         float rowHeight = 20;
 
         newPageIfNeeded((rows.size() + 1) * rowHeight + 10);
@@ -362,20 +392,29 @@ public class PdfGeneratorService {
         // Header row
         float x = PAGE_MARGIN;
         for (int i = 0; i < colCount; i++) {
-            drawCell(x, yPosition, colWidth, rowHeight, headers[i], true);
-            x += colWidth;
+            drawCell(x, yPosition, colWidths[i], rowHeight, headers[i], true);
+            x += colWidths[i];
         }
         yPosition -= rowHeight;
 
         // Data rows
         for (List<String> row : rows) {
             x = PAGE_MARGIN;
+            boolean highlightRow = row.get(0).contains("*");
             for (int i = 0; i < colCount; i++) {
-                drawCell(x, yPosition, colWidth, rowHeight, row.get(i), row.get(0).contains("*"));
-                x += colWidth;
+                drawCell(x, yPosition, colWidths[i], rowHeight, row.get(i), highlightRow);
+                x += colWidths[i];
             }
             yPosition -= rowHeight;
         }
+    }
+
+    /** Equal-width columns, for tables (like the health score breakdown) that don't need per-column weighting. */
+    private void drawTable(String[] headers, List<List<String>> rows) throws IOException {
+        float equalWeight = 1f / headers.length;
+        float[] weights = new float[headers.length];
+        java.util.Arrays.fill(weights, equalWeight);
+        drawTable(headers, rows, weights);
     }
 
     private void drawCell(float x, float y, float width, float height, String text, boolean highlight) throws IOException {
@@ -391,10 +430,31 @@ public class PdfGeneratorService {
             contentStream.fill();
         }
 
-        // Draw text
+        // Draw text, truncated with an ellipsis so long scheme names/agencies never overflow the cell border
+        PDFont cellFont = highlight ? BOLD_FONT : BODY_FONT;
+        float fontSize = 8;
+        String safeText = sanitizeForPdf(text);
+        String display = truncateToWidth(safeText, cellFont, fontSize, width - 4);
         float textX = x + 2;
         float textY = y - height + 4;
-        writeText(text, highlight ? BOLD_FONT : BODY_FONT, 8, textX, textY);
+        writeText(display, cellFont, fontSize, textX, textY);
+    }
+
+    /** Cuts {@code text} down (adding "...") until it fits {@code maxWidth}; returns it unchanged if it already fits. */
+    private String truncateToWidth(String text, PDFont font, float fontSize, float maxWidth) throws IOException {
+        if (font.getStringWidth(text) / 1000 * fontSize <= maxWidth) {
+            return text;
+        }
+        String ellipsis = "...";
+        StringBuilder truncated = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            String candidate = truncated.toString() + text.charAt(i) + ellipsis;
+            if (font.getStringWidth(candidate) / 1000 * fontSize > maxWidth) {
+                break;
+            }
+            truncated.append(text.charAt(i));
+        }
+        return truncated.length() > 0 ? truncated + ellipsis : ellipsis;
     }
 
     private void addRiskAnalysis(DscrService.DscrResult dscr,

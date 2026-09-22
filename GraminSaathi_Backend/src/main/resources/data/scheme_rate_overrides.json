@@ -1,0 +1,98 @@
+{
+  "state-mp-mmuky-2022": {
+    "interest_subvention_pct": 3,
+    "basis": "Dataset note: 3% interest subsidy per annum. Bank sets the base rate."
+  },
+  "central-mof-standup-2016": {
+    "assumed_bank_rate_pct": 11.5,
+    "basis": "Dataset note: bank rate is MCLR + 3% + tenor premium. No subvention, so assumed 11.5% instead of the default."
+  },
+  "central-agri-aif-2020": {
+    "interest_subvention_pct": 3,
+    "subvention_years": 7,
+    "basis": "Dataset note: 3% per annum for a maximum of 7 years."
+  },
+  "central-dahd-ahidf-2020": {
+    "interest_subvention_pct": 3,
+    "subvention_years": 8,
+    "basis": "Dataset note: 3% per annum for up to 8 years (including the 2 year moratorium)."
+  },
+  "central-ncdc-yuva-sahakar-2018": {
+    "basis": "NCDC rate. The 2% subvention only applies to special-category cooperatives, so it is not counted."
+  },
+  "state-mp-tantya-mama-2022": {
+    "interest_subvention_pct": 7,
+    "subvention_years": 5,
+    "basis": "Dataset note: 7% per annum for a maximum of 5 years."
+  },
+  "state-tn-needs-2012": {
+    "interest_subvention_pct": 3,
+    "basis": "Dataset note: bank rate reduced by 3% per annum. The 25% capital subsidy is not netted (not a plain % of loan)."
+  },
+  "state-tn-aabcs-2023": {
+    "interest_subvention_pct": 6,
+    "basis": "Dataset note: 6% subvention. The 35% capital subsidy is not netted (not a plain % of loan)."
+  },
+  "state-kl-ndprem-2013": {
+    "interest_subvention_pct": 3,
+    "basis": "Dataset note: 3% subvention. The 15% capital seed subsidy is not netted."
+  },
+  "state-pb-ibdp-2022": {
+    "interest_subvention_pct": 5,
+    "subvention_years": 7,
+    "basis": "Dataset note: 5% annual subvention for up to 7 years. The FCI subsidy is not netted."
+  },
+  "state-hr-heep-2020": {
+    "interest_subvention_pct": 5,
+    "subvention_years": 5,
+    "basis": "Dataset note: 5-6% for 5-7 years; the lower bounds are used. The FCI subsidy is not netted."
+  },
+  "state-rj-imshakti-2019": {
+    "basis": "Only a back-ended capital grant (25-30%) is described, no interest subvention. Bank base rate assumed; the grant is not netted."
+  },
+  "state-mp-birsa-munda-2022": {
+    "interest_subvention_pct": 5,
+    "subvention_years": 7,
+    "basis": "Dataset note: 5% interest subsidy for a maximum of 7 years."
+  },
+  "state-hp-mmsy-2018": {
+    "interest_subvention_pct": 5,
+    "subvention_years": 3,
+    "basis": "Dataset note: 5% reduction for the first 3 years of the term loan only, so averaged over the tenure."
+  },
+  "state-ar-ddusy-2017": {
+    "basis": "The 5% subvention is for women entrepreneurs only and the scheme rules do not gate on gender, so it is not counted. The 30% capital subsidy is not netted."
+  },
+  "state-mp-mmkuy-2018": {
+    "interest_subvention_pct": 5,
+    "subvention_years": 7,
+    "basis": "Dataset note: 5% reduction for 7 years. The 15% margin money subsidy is not netted."
+  },
+  "state-gj-dtaisy-2014": {
+    "interest_subvention_pct": 7,
+    "basis": "Dataset note: fixed 7% interest subvention per annum."
+  },
+  "state-uk-mmsy-2023": {
+    "interest_subvention_pct": 5,
+    "basis": "Dataset note: 5% reduction on commercial bank rates. The 50-60% capital subsidy is not netted."
+  },
+  "central-fish-fidf-2018": {
+    "interest_subvention_pct": 3,
+    "max_lending_rate_pct": 9,
+    "basis": "Dataset note: 3% subvention per annum, capping the lending rate at 9%."
+  },
+  "state-gj-msme-subsidy-2020": {
+    "interest_subvention_pct": 5,
+    "subvention_years": 7,
+    "basis": "Dataset note: 5-7% for 7 years; the lower bound is used. The FCI subsidy is not netted."
+  },
+  "state-wb-bccs-2023": {
+    "basis": "Dataset note: standard commercial bank rates apply. The 10% margin money grant (max Rs 25,000) is not netted."
+  },
+  "state-jk-mumkin-2020": {
+    "basis": "Bank financing at the bank's own rate. The 20% margin money is not netted."
+  },
+  "state-up-gopalak-2019": {
+    "basis": "Commercial term loan at the bank's rate; margin money grant is netted separately by the ranking."
+  }
+}

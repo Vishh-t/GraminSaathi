@@ -36,6 +36,14 @@ public class User implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * The user's saved {@code ApplicantProfile} (age, category, income, ...), stored as JSON so new
+     * applicant fields never need a migration. Null until they fill the intake form once; from then on
+     * every /api/analyze call for this user is auto-merged with it server-side.
+     */
+    @Column(name = "applicant_profile_json", columnDefinition = "TEXT")
+    private String applicantProfileJson;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

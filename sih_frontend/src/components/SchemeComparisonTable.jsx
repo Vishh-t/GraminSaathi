@@ -41,6 +41,11 @@ export default function SchemeComparisonTable({ schemeComparison, className = ''
                 </td>
                 <td className="p-3 text-right font-medium">
                   {scheme.interestRate.toFixed(1)}%
+                  {scheme.rateEstimated && (
+                    <span className="ml-1 text-xs font-normal text-gray-400" title="Estimated from the scheme's stated interest subvention, not fixed by the scheme itself">
+                      (est.)
+                    </span>
+                  )}
                 </td>
                 <td className="p-3 text-right">
                   {scheme.tenureYears} years
@@ -62,7 +67,8 @@ export default function SchemeComparisonTable({ schemeComparison, className = ''
       </div>
 
       <p className="mt-3 text-sm text-gray-500 text-center">
-        ★ = Your matched scheme based on project cost
+        ★ = Your matched scheme (the cheapest option you can afford). (est.) = interest rate estimated from the scheme's
+        subsidy note, not fixed by the scheme itself — verify current terms with the implementing agency before applying.
       </p>
     </div>
   );

@@ -2,12 +2,12 @@ package com.graminsaathi.controller;
 
 import com.graminsaathi.data.DemoData;
 import com.graminsaathi.data.DemoDataLoader;
-import com.graminsaathi.data.SchemesDataLoader;
-import com.graminsaathi.data.SchemesReference;
 import com.graminsaathi.dto.response.VillageResponse;
 import com.graminsaathi.dto.response.BusinessCategoryResponse;
 import com.graminsaathi.dto.response.BusinessDataResponse;
 import com.graminsaathi.dto.response.SchemeComparisonResponse;
+import com.graminsaathi.model.Scheme;
+import com.graminsaathi.service.FinancingSchemeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class ReferenceDataController {
 
     private final DemoDataLoader demoDataLoader;
-    private final SchemesDataLoader schemesDataLoader;
+    private final FinancingSchemeService financingSchemeService;
 
     @GetMapping("/villages")
     public ResponseEntity<List<VillageResponse>> getAllVillages() {
@@ -40,9 +40,16 @@ public class ReferenceDataController {
         return ResponseEntity.ok(categories);
     }
 
+    /**
+     * Every real financing scheme (own or estimated interest rate, tenure >= 1 year - see
+     * {@link FinancingSchemeService#getFinancingSchemes()}), with no loan amount or applicant to rank
+     * them against. So unlike the per-analysis comparison table, no row here is a "primary" pick and
+     * none carries total repayment, subsidy, net cost or an affordability verdict - those only make
+     * sense for a specific loan.
+     */
     @GetMapping("/schemes")
     public ResponseEntity<List<SchemeComparisonResponse>> getAllSchemes() {
-        List<SchemeComparisonResponse> schemes = schemesDataLoader.getAllSchemes().stream()
+        List<SchemeComparisonResponse> schemes = financingSchemeService.getFinancingSchemes().stream()
                 .map(this::mapToSchemeResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(schemes);
@@ -89,14 +96,15 @@ public class ReferenceDataController {
         return response;
     }
 
-    private SchemeComparisonResponse mapToSchemeResponse(SchemesReference.Scheme scheme) {
+    private SchemeComparisonResponse mapToSchemeResponse(Scheme scheme) {
         SchemeComparisonResponse response = new SchemeComparisonResponse();
-        response.setSchemeName(scheme.getSchemeName());
-        response.setInterestRate(scheme.getInterestRate() * 100);
-        response.setTenureYears(scheme.getTenureYears());
-        response.setMoratoriumMonths(scheme.getMoratoriumMonths());
-        response.setAgency(scheme.getAgency());
-        response.setSubsidyNote(scheme.getSubsidyNote());
+        response.setSchemeName(scheme.getName());
+        response.setInterestRate(scheme.getInterestRate()); // dataset/estimate already in percent
+        response.setTenureYears((int) Math.round(scheme.getTenureYears()));
+        response.setMoratoriumMonths(scheme.getMoratoriumMonths() != null ? scheme.getMoratoriumMonths() : 0);
+        response.setAgency(scheme.getImplementingAgency());
+        response.setSubsidyNote(scheme.getEffectiveInterestRateNote());
+        response.setRateEstimated(Boolean.TRUE.equals(scheme.getRateEstimated()));
         response.setPrimary(false);
         return response;
     }

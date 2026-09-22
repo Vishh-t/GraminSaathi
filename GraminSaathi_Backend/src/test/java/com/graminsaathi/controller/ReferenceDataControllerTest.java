@@ -2,10 +2,8 @@ package com.graminsaathi.controller;
 
 import com.graminsaathi.data.DemoData;
 import com.graminsaathi.data.DemoDataLoader;
-import com.graminsaathi.data.SchemesDataLoader;
-import com.graminsaathi.dto.response.VillageResponse;
-import com.graminsaathi.dto.response.BusinessCategoryResponse;
-import com.graminsaathi.dto.response.SchemeComparisonResponse;
+import com.graminsaathi.model.Scheme;
+import com.graminsaathi.service.FinancingSchemeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +33,7 @@ class ReferenceDataControllerTest {
     private DemoDataLoader demoDataLoader;
 
     @MockBean
-    private SchemesDataLoader schemesDataLoader;
+    private FinancingSchemeService financingSchemeService;
 
     @Test
     void getAllVillages() throws Exception {
@@ -80,21 +78,49 @@ class ReferenceDataControllerTest {
 
     @Test
     void getAllSchemes() throws Exception {
-        com.graminsaathi.data.SchemesReference.Scheme scheme = new com.graminsaathi.data.SchemesReference.Scheme();
-        scheme.setSchemeName("Micro Finance Scheme");
-        scheme.setMinCost(0.0);
-        scheme.setMaxCost(140000.0);
-        scheme.setInterestRate(0.065);
-        scheme.setTenureYears(3);
+        Scheme scheme = new Scheme();
+        scheme.setSchemeId("test-scheme");
+        scheme.setName("Small Loan Scheme");
+        scheme.setInterestRate(6.5); // percent, matching the real dataset
+        scheme.setTenureYears(3.0);
         scheme.setMoratoriumMonths(3);
-        scheme.setAgency("NBCFDC/NSFDC-style SCA");
+        scheme.setImplementingAgency("NBCFDC/NSFDC-style SCA");
+        scheme.setEffectiveInterestRateNote("Test note");
 
-        when(schemesDataLoader.getAllSchemes()).thenReturn(List.of(scheme));
+        when(financingSchemeService.getFinancingSchemes()).thenReturn(List.of(scheme));
 
         mockMvc.perform(get("/api/schemes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].schemeName").value("Micro Finance Scheme"))
-                .andExpect(jsonPath("$[0].interestRate").value(6.5));
+                .andExpect(jsonPath("$[0].schemeName").value("Small Loan Scheme"))
+                .andExpect(jsonPath("$[0].interestRate").value(6.5))
+                .andExpect(jsonPath("$[0].tenureYears").value(3))
+                .andExpect(jsonPath("$[0].moratoriumMonths").value(3))
+                .andExpect(jsonPath("$[0].agency").value("NBCFDC/NSFDC-style SCA"))
+                .andExpect(jsonPath("$[0].subsidyNote").value("Test note"))
+                .andExpect(jsonPath("$[0].isPrimary").value(false)) // @JsonProperty("isPrimary") pins the key (see doc finding 3.7)
+                .andExpect(jsonPath("$[0].rateEstimated").value(false))
+                .andExpect(jsonPath("$[0].emi").doesNotExist())
+                .andExpect(jsonPath("$[0].totalRepayment").doesNotExist());
+    }
+
+    @Test
+    void getAllSchemesFillsInAMissingMoratoriumAndFlagsAnEstimatedRate() throws Exception {
+        Scheme scheme = new Scheme();
+        scheme.setSchemeId("test-estimated");
+        scheme.setName("Estimated Rate Scheme");
+        scheme.setInterestRate(7.5);
+        scheme.setTenureYears(2.5); // fractional tenure, e.g. PM Vishwakarma - rounds for display
+        scheme.setMoratoriumMonths(null);
+        scheme.setRateEstimated(true);
+        scheme.setImplementingAgency("Test Agency");
+
+        when(financingSchemeService.getFinancingSchemes()).thenReturn(List.of(scheme));
+
+        mockMvc.perform(get("/api/schemes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tenureYears").value(3))
+                .andExpect(jsonPath("$[0].moratoriumMonths").value(0))
+                .andExpect(jsonPath("$[0].rateEstimated").value(true));
     }
 
     private DemoData.BusinessData createBusinessData(int competitors, Double price) {

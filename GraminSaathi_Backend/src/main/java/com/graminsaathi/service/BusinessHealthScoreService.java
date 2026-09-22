@@ -70,9 +70,9 @@ public class BusinessHealthScoreService {
         );
 
         String recommendation;
-        if (overallScore >= 75) recommendation = "Proceed";
-        else if (overallScore >= 50) recommendation = "Proceed with modifications";
-        else recommendation = "Do not finance as structured";
+        if (overallScore >= 75) recommendation = "🟢 Proceed";
+        else if (overallScore >= 50) recommendation = "🟡 Proceed with modifications";
+        else recommendation = "🔴 Do not finance as structured";
 
         return new HealthScoreResult(
                 overallScore,

@@ -1,0 +1,362 @@
+[
+  {
+    "scheme_id": "central-msde-pmvishwakarma-2023",
+    "name": "PM Vishwakarma Scheme",
+    "key": "toolkit_incentive",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "central-mohua-pmsvanidhi-2020",
+    "name": "PM SVANidhi (Street Vendor's AtmaNirbhar Nidhi)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "central-mohua-pmsvanidhi-2020",
+    "name": "PM SVANidhi (Street Vendor's AtmaNirbhar Nidhi)",
+    "key": "digital_cashback",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-up-odop-margin-2018",
+    "name": "One District One Product (ODOP) Margin Money Scheme",
+    "key": "large_projects",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-rj-mlupy-2019",
+    "name": "Mukhyamantri Laghu Udyog Protsahan Yojana (MLUPY)",
+    "key": "slab_based",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "central-dahd-ahidf-2020",
+    "name": "Animal Husbandry Infrastructure Development Fund (AHIDF)",
+    "key": "credit_guarantee",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-od-balaram-2020",
+    "name": "Bhoomihina Agriculturist Loan & Resources Augmentation Model (BALARAM)",
+    "key": "interest_free_tier",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "central-moa-10000fpo-2020",
+    "name": "Formation and Promotion of 10,000 FPOs Scheme",
+    "key": "credit_guarantee",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "central-moa-kcc-miss-1998",
+    "name": "Kisan Credit Card (KCC) & Modified Interest Subvention Scheme (MISS)",
+    "key": "prompt_repayment",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-rj-mahila-nidhi-2022",
+    "name": "Rajasthan Mahila Nidhi",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-mh-panjabrao-crop-loan-1990",
+    "name": "Dr. Panjabrao Deshmukh Interest Concession Scheme",
+    "key": "zero_percent_credit",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "central-moa-nbm-2018",
+    "name": "National Bamboo Mission (NBM)",
+    "key": "government_agencies",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-tn-needs-2012",
+    "name": "New Entrepreneur-cum-Enterprise Development Scheme (NEEDS)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-tn-aabcs-2023",
+    "name": "Annal Ambedkar Business Champions Scheme (AABCS)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ts-tpride-2014",
+    "name": "Telangana State Program for Rapid Incubation of Dalit Entrepreneurs (T-PRIDE)",
+    "key": "power_and_interest",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ts-tidea-2014",
+    "name": "Telangana State Industrial Development and Entrepreneur Advancement (T-IDEA)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-kl-ess-2012",
+    "name": "Kerala Entrepreneur Support Scheme (ESS)",
+    "key": "thrust_sectors",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-kl-ndprem-2013",
+    "name": "NORKA Department Project for Returned Emigrants (NDPREM)",
+    "key": "prompt_repayment",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-wb-bccs-2023",
+    "name": "West Bengal Bhabishyat Credit Card Scheme (WBBCCS)",
+    "key": "credit_guarantee",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-pb-ibdp-2022",
+    "name": "Punjab Industrial and Business Development Capital Subsidy",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hr-heep-2020",
+    "name": "Haryana Enterprise Promotion Policy (HEEP) Capital Subsidy",
+    "key": "backward_blocks_c_and_d",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-rj-vishwakarma-kamgar-2023",
+    "name": "Vishwakarma Kamgar Kalyan Yojana (Rajasthan)",
+    "key": "insurance_and_marriage",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-tn-tanseed-2021",
+    "name": "Tamil Nadu Startup Seed Grant Fund (TANSEED)",
+    "key": "matching_grant_rule",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hp-mmsy-2018",
+    "name": "Mukhya Mantri Swavlamban Yojana (MMSY)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-wb-ksp-2020",
+    "name": "Karma Sathi Prakalpa",
+    "key": "capital_subsidy",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-jk-mumkin-2020",
+    "name": "Mumkin Scheme (Mission Youth)",
+    "key": "manufacturer_discount",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-nl-cmmfi-2022",
+    "name": "Chief Minister's Micro Finance Initiative (CMMFI)",
+    "key": "kcc_interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ml-prime-2020",
+    "name": "PRIME Livelihood Enterprise Advancement (Meghalaya)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-mp-mmkuy-2018",
+    "name": "Mukhyamantri Krishak Udyami Yojana (MMKUY)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-nl-cmmfi-2022",
+    "name": "Chief Minister's Micro Finance Initiative (CMMFI)",
+    "key": "kcc_interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ml-prime-2020",
+    "name": "PRIME Livelihood Enterprise Advancement (Meghalaya)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-mp-mmkuy-2018",
+    "name": "Mukhyamantri Krishak Udyami Yojana (MMKUY)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-kl-subhiksha-2020",
+    "name": "Subhiksha Keralam",
+    "key": "fallow_land",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-cg-rgkny-2020",
+    "name": "Rajiv Gandhi Kisan Nyay Yojana",
+    "key": "crop_diversification",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ar-cmkry-2015",
+    "name": "Chief Minister's Krishi Rinn Yojana",
+    "key": "zero_percent_interest",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-mp-gramin-kamgar-2020",
+    "name": "Mukhyamantri Gramin Kamgar Setu Yojana",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-cg-mvsy-2023",
+    "name": "Mukhyamantri Vriksh Sampada Yojana",
+    "key": "large_landholdings",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hr-pkcc-2021",
+    "name": "Pashudhan Kisan Credit Card Scheme",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hr-mpmv-2020",
+    "name": "Mera Pani Meri Virasat",
+    "key": "agroforestry",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hp-pkkky-2018",
+    "name": "Prakritik Kheti Khushhal Kisan Yojana (PK3Y)",
+    "key": "desi_cow_purchase",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ml-piggery-2020",
+    "name": "Meghalaya Piggery Mission",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-cg-bihan-2013",
+    "name": "Bihan (Chhattisgarh State Rural Livelihoods Mission)",
+    "key": "revolving_fund",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ka-ganga-kalyana-1996",
+    "name": "Ganga Kalyana Scheme",
+    "key": "community_irrigation",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-uk-mmsy-2023",
+    "name": "Mukhyamantri Matsya Sampada Yojana",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hp-pk3y-2018",
+    "name": "Prakritik Kheti Khushhal Kisan Yojana (PK3Y)",
+    "key": "desi_cow_purchase",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ml-piggery-2020",
+    "name": "Meghalaya Piggery Mission",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-cg-bihan-2013",
+    "name": "Bihan (Chhattisgarh State Rural Livelihoods Mission)",
+    "key": "revolving_fund",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-mh-charmakar-loan-2005",
+    "name": "Sant Rohidas Charmakar Special Subsidy & Margin Scheme",
+    "key": "term_loan_tier",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ap-matsyakara-bharosa-2019",
+    "name": "YSR Matsyakara Bharosa",
+    "key": "fuel_subsidy",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-ap-jagananna-thodu-2020",
+    "name": "YSR Jagananna Thodu",
+    "key": "step_up_credit",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-up-kukkut-vikas-2013",
+    "name": "Uttar Pradesh Kukkut Vikas Niti (Commercial Poultry Policy)",
+    "key": "interest_subvention",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-od-oyif-2013",
+    "name": "Odisha Youth Innovation Fund",
+    "key": "stage_based_grants",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-gj-msme-subsidy-2020",
+    "name": "Gujarat Industrial Policy - Capital Subsidy for MSMEs",
+    "key": "taluka_categories",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-kl-we-mission-2015",
+    "name": "WE Mission Kerala (Women Entrepreneurship)",
+    "key": "interest_tiers",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-rj-mlvvsy-2022",
+    "name": "Mukhyamantri Laghu Vanijyik Vahan Swarojgar Yojana",
+    "key": "manufacturer_discount",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hp-psksy-2018",
+    "name": "Pushp Utpadan Yojana / Mukhya Mantri Pushp Kranti Yojana",
+    "key": "greenhouse_infrastructure",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-gj-kssy-2016",
+    "name": "Kisan Sahay Yojana / Mukhya Mantri Kisan Sahay Yojana",
+    "key": "damage_tiers",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-hr-vivad-se-vishwas-2023",
+    "name": "Haryana Mukhyamantri Vyapari Kshatipurti Yojana",
+    "key": "turnover_slabs",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-rj-cmky-2020",
+    "name": "Mukhyamantri Krishak Sathi Yojana",
+    "key": "accident_insurance",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  },
+  {
+    "scheme_id": "state-tn-msme-pme-2021",
+    "name": "Tamil Nadu MSME Promotion of Energy Audit and Conservation of Energy (PEACE)",
+    "key": "audit_fee",
+    "reason": "no applicant-attribute gate found; treated as an always-on component of the base scheme"
+  }
+]

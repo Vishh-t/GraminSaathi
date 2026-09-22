@@ -44,6 +44,10 @@ public class DemoData {
     public static class BusinessCategoryData {
         @JsonProperty("category_name")
         private String categoryName;
+        /** Scheme-vocabulary sector (manufacturing, services, trading, agri_allied, ...) used to pick real financing schemes. */
+        private String sector;
+        @JsonProperty("sub_sector")
+        private String subSector;
         @JsonProperty("reference_project_cost")
         private Double referenceProjectCost;
         @JsonProperty("reference_cost_range")

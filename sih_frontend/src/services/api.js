@@ -40,6 +40,13 @@ export const referenceAPI = {
   getSchemes: () => api.get('/schemes'),
 };
 
+export const profileAPI = {
+  // Empty (all-null-field) object when the user hasn't answered the intake form yet.
+  getApplicant: () => api.get('/profile/applicant'),
+  // Merges onto whatever is already saved - safe to call with a partial profile from any single screen.
+  saveApplicant: (data) => api.put('/profile/applicant', data),
+};
+
 export const analysisAPI = {
   analyze: (data) => api.post('/analyze', data),
   discover: (data) => api.post('/discover', data),

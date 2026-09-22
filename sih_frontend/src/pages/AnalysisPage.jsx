@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { analysisAPI, reportsAPI, referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../hooks/useToast';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
 import OpportunityScoreCard from '../components/OpportunityScoreCard';
@@ -17,6 +18,7 @@ import RoadmapTimeline from '../components/RoadmapTimeline';
 import LocalPriceIntelligence from '../components/LocalPriceIntelligence';
 import FailureBoundary from '../components/FailureBoundary';
 import SchemeComparisonTable from '../components/SchemeComparisonTable';
+import UnlockMatchesBanner from '../components/UnlockMatchesBanner';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage, getErrorMessageFromBlob } from '../utils/errors';
 import { Loader2, FileText, MapPin, BarChart2, Download, Save, Lightbulb, Building2, Wallet, Search } from 'lucide-react';
@@ -31,6 +33,7 @@ const tabs = [
 export default function AnalysisPage() {
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
@@ -149,6 +152,24 @@ export default function AnalysisPage() {
 
   const handleViewMap = () => {
     navigate(`/map?village=${village}&category=${category}&capital=${capital}`);
+  };
+
+  // Re-fetches without the full-page loader (that would yank the intake modal's
+  // "you're all set" screen out from under the user). AnalysisController
+  // already merges the just-saved applicant profile server-side for logged-in
+  // users, so a plain re-analyze picks up the new matches automatically.
+  const handleProfileSaved = async () => {
+    try {
+      const res = await analysisAPI.analyze({
+        villageName: village,
+        businessCategory: category,
+        availableMarginCapital: parseFloat(capital),
+      });
+      setAnalysis(res.data);
+      showToast('Updated your results using your new profile.', 'success');
+    } catch (err) {
+      showToast(getErrorMessage(err, "Couldn't refresh your results — try re-running the analysis."), 'error');
+    }
   };
 
   const handleRunSimulation = () => {
@@ -322,6 +343,8 @@ export default function AnalysisPage() {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {isAuthenticated && <UnlockMatchesBanner onProfileSaved={handleProfileSaved} />}
+
             <div className="grid lg:grid-cols-2 gap-6">
               <OpportunityScoreCard
                 score={feasibility.opportunityScore}

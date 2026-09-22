@@ -2,9 +2,11 @@ package com.graminsaathi.controller;
 
 import com.graminsaathi.dto.request.AnalyzeRequest;
 import com.graminsaathi.dto.response.*;
+import com.graminsaathi.model.User;
 import com.graminsaathi.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,9 +27,22 @@ public class AnalysisController {
     private final SupplyChainRiskService supplyChainRiskService;
     private final PeerBenchmarkService peerBenchmarkService;
     private final RoadmapMilestoneService roadmapMilestoneService;
+    private final ProfileService profileService;
 
+    /**
+     * When the caller is logged in, their saved "ask once" applicant profile (ProfileService) is merged
+     * underneath whatever {@code applicant} facts this request sends - request facts win, the saved
+     * profile fills any gaps. So once someone has answered the intake form a single time, every later
+     * analysis (any village, any category) automatically sees their real eligibility, with nothing extra
+     * for the frontend to resend. Anonymous callers are unaffected (user is null - no merge happens).
+     */
     @PostMapping("/analyze")
-    public ResponseEntity<AnalyzeResponse> analyze(@RequestBody AnalyzeRequest request) {
+    public ResponseEntity<AnalyzeResponse> analyze(@RequestBody AnalyzeRequest request,
+                                                     @AuthenticationPrincipal User user) {
+        if (user != null) {
+            request.setApplicant(profileService.merge(profileService.getApplicantProfile(user), request.getApplicant()));
+        }
+
         FinancialCalculatorService.FinancialResult financial = financialCalculatorService.calculate(request);
         FeasibilityScoreService.FeasibilityResult feasibility = feasibilityScoreService.calculate(request.getVillageName(), request.getBusinessCategory());
         DscrService.DscrResult dscr = dscrService.calculate(request.getBusinessCategory(), financial.emi());

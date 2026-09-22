@@ -1,25 +1,48 @@
 package com.graminsaathi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.graminsaathi.data.DemoData;
 import com.graminsaathi.data.DemoDataLoader;
-import com.graminsaathi.data.SchemesDataLoader;
-import com.graminsaathi.data.SchemesReference;
 import com.graminsaathi.dto.request.AnalyzeRequest;
+import com.graminsaathi.dto.request.ApplicantProfile;
 import com.graminsaathi.dto.response.SchemeComparisonResponse;
+import com.graminsaathi.model.Scheme;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class FinancialCalculatorService {
 
+    /** How many financing schemes to show in the comparison table (the best-ranked first). */
+    static final int MAX_COMPARISON_ROWS = 5;
+
     private final DemoDataLoader demoDataLoader;
-    private final SchemesDataLoader schemesDataLoader;
+    private final FinancingSchemeService financingSchemeService;
+
+    /** A real scheme with its repayment terms worked out for a specific loan amount. */
+    private record FinancingOption(
+            Scheme scheme,
+            double annualRate,
+            int tenureYears,
+            int moratoriumMonths,
+            int repaymentMonths,
+            double emi,
+            double totalRepayment,
+            /** Capital / margin-money subsidy the scheme gives on this loan (0 when none we can count). */
+            double subsidy,
+            /** totalRepayment - subsidy: what options are ranked by. */
+            double netCost,
+            /** EMI fits within the business's monthly net operating income. */
+            boolean affordable
+    ) {}
 
     public record FinancialResult(
             double projectCost,
@@ -56,20 +79,28 @@ public class FinancialCalculatorService {
         double projectCost = availableMarginCapital / 0.10;
         double loanAmount = projectCost * 0.90;
 
-        SchemesReference.Scheme primaryScheme = schemesDataLoader.getPrimaryScheme(projectCost);
-        if (primaryScheme == null) {
-            throw new IllegalArgumentException("Project cost exceeds the Rs. 50 lakh scheme ceiling.");
+        DemoData.VillageData village = demoDataLoader.getVillage(request.getVillageName());
+        ApplicantProfile applicant = financingSchemeService.resolveApplicant(village, category, request.getApplicant());
+
+        // Same figure DscrService uses, so "affordable" here means the DSCR label will not be "Risky".
+        double monthlyNetOperatingIncome = category.getReferenceMonthlyRevenue() - category.getReferenceMonthlyOperatingCost();
+        List<FinancingOption> financingOptions = rankFinancingOptions(loanAmount, applicant, monthlyNetOperatingIncome);
+        if (financingOptions.isEmpty()) {
+            String location = village != null && village.getState() != null ? village.getState() : "this location";
+            throw new IllegalArgumentException(String.format(
+                    "No government financing scheme covers a loan of Rs. %.0f in %s.", loanAmount, location));
         }
 
-        String schemeName = primaryScheme.getSchemeName();
-        double interestRateAnnual = primaryScheme.getInterestRate();
-        int tenureYears = primaryScheme.getTenureYears();
-        int moratoriumMonths = primaryScheme.getMoratoriumMonths();
+        FinancingOption primary = financingOptions.get(0);
+        String schemeName = primary.scheme().getName();
+        double interestRateAnnual = primary.annualRate();
+        int tenureYears = primary.tenureYears();
+        int moratoriumMonths = primary.moratoriumMonths();
 
-        int repaymentMonths = (tenureYears * 12) - moratoriumMonths;
+        int repaymentMonths = primary.repaymentMonths();
         double monthlyRate = interestRateAnnual / 12;
 
-        double emi = calculateEmi(loanAmount, monthlyRate, repaymentMonths);
+        double emi = primary.emi();
 
         double workingCapitalEstimate = category.getReferenceMonthlyOperatingCost() * category.getWorkingCapitalMonths();
 
@@ -77,7 +108,7 @@ public class FinancialCalculatorService {
         double recommendedLoanAmount = recommendedProjectCost * 0.90;
         double bufferAmount = loanAmount - recommendedLoanAmount;
 
-        List<SchemeComparisonResponse> schemeComparison = buildSchemeComparison(projectCost, primaryScheme);
+        List<SchemeComparisonResponse> schemeComparison = buildSchemeComparison(financingOptions);
 
         String workingCapitalWarning = checkWorkingCapitalWarning(
                 availableMarginCapital, recommendedProjectCost, workingCapitalEstimate, category.getWorkingCapitalMonths()
@@ -131,27 +162,136 @@ public class FinancialCalculatorService {
         return principal * monthlyRate * factor / (factor - 1);
     }
 
-    private List<SchemeComparisonResponse> buildSchemeComparison(double projectCost, SchemesReference.Scheme primaryScheme) {
+    /**
+     * Real financing schemes the applicant is eligible for, worked out for this loan amount and ranked so that
+     * the first entry - the scheme the rest of the analysis (EMI, DSCR, survival) is built on - is the cheapest
+     * one the business can actually pay:
+     * <ol>
+     *   <li>options whose EMI fits within the business's monthly net operating income come first, so a loan
+     *       that is cheap on paper but would leave the business unable to pay is never recommended over one it can;</li>
+     *   <li>then the lowest net cost: total repayment minus the scheme's capital / margin-money subsidy
+     *       (see {@link #estimateSubsidy});</li>
+     *   <li>ties: lower EMI, then scheme id.</li>
+     * </ol>
+     * If nothing is affordable, the same order applies (cheapest first) and DSCR will show as Risky.
+     */
+    private List<FinancingOption> rankFinancingOptions(double loanAmount, ApplicantProfile applicant,
+                                                       double monthlyNetOperatingIncome) {
+        return financingSchemeService.findFinancingCandidates(loanAmount, applicant).stream()
+                .map(scheme -> toFinancingOption(scheme, loanAmount, monthlyNetOperatingIncome))
+                .flatMap(Optional::stream)
+                .sorted(Comparator.comparing((FinancingOption option) -> !option.affordable()) // false (affordable) sorts first
+                        .thenComparingDouble(FinancingOption::netCost)
+                        .thenComparingDouble(FinancingOption::emi)
+                        .thenComparing(option -> option.scheme().getSchemeId()))
+                .toList();
+    }
+
+    /**
+     * Empty when the moratorium swallows the whole tenure, i.e. there is nothing to repay in instalments.
+     *
+     * <p>Tenure is worked out in months, so fractional tenures (2.5 years) are exact; {@code tenureYears}
+     * is only the rounded figure for display. Interest keeps accruing through the moratorium and is
+     * capitalised, so the instalments repay the grown principal - a moratorium delays payments, it does
+     * not make the loan cheaper.
+     *
+     * <p>The EMI is on the full loan: a subsidy is counted in the ranking (net cost) but never lowers the
+     * EMI, so DSCR and survival stay conservative until the subsidy is actually credited.
+     */
+    private Optional<FinancingOption> toFinancingOption(Scheme scheme, double loanAmount, double monthlyNetOperatingIncome) {
+        int tenureMonths = (int) Math.round(scheme.getTenureYears() * 12);
+        int tenureYears = (int) Math.round(scheme.getTenureYears());
+        int moratoriumMonths = scheme.getMoratoriumMonths() != null ? scheme.getMoratoriumMonths() : 0;
+        int repaymentMonths = tenureMonths - moratoriumMonths;
+        if (repaymentMonths <= 0) {
+            return Optional.empty();
+        }
+
+        double annualRate = scheme.getInterestRate() / 100.0; // dataset stores percent (11 = 11%)
+        double monthlyRate = annualRate / 12;
+        double principalAtRepaymentStart = loanAmount * Math.pow(1 + monthlyRate, moratoriumMonths);
+        double emi = calculateEmi(principalAtRepaymentStart, monthlyRate, repaymentMonths);
+        double totalRepayment = emi * repaymentMonths;
+        double subsidy = estimateSubsidy(scheme, loanAmount);
+        return Optional.of(new FinancingOption(
+                scheme, annualRate, tenureYears, moratoriumMonths, repaymentMonths, emi, totalRepayment,
+                subsidy, totalRepayment - subsidy, emi <= monthlyNetOperatingIncome));
+    }
+
+    /**
+     * Capital / margin-money subsidy on this loan, only where the dataset states it unambiguously:
+     * {@code calculation_type = pct_of_loan_capped}, i.e. min(subsidy_pct of the loan, max_subsidy_amount).
+     * Other types keep "subsidy_pct" for different things (interest subvention, share of project cost, ...),
+     * so they are not netted. The base percentage is used, never the special-category enhancement, so this is
+     * a lower bound. A positive percentage next to a cap of 0 is ambiguous and counts as no subsidy.
+     */
+    private double estimateSubsidy(Scheme scheme, double loanAmount) {
+        JsonNode benefit = scheme.getBenefit();
+        if (benefit == null || !"pct_of_loan_capped".equals(benefit.path("calculation_type").asText())) {
+            return 0;
+        }
+        double pct = benefit.path("subsidy_pct").asDouble(0);
+        if (pct <= 0) {
+            return 0;
+        }
+
+        double subsidy = loanAmount * pct / 100.0;
+        JsonNode cap = benefit.path("max_subsidy_amount");
+        if (!cap.isMissingNode() && !cap.isNull()) {
+            double maxAmount = cap.asDouble(0);
+            if (maxAmount <= 0) {
+                return 0;
+            }
+            subsidy = Math.min(subsidy, maxAmount);
+        }
+        return Math.min(subsidy, loanAmount);
+    }
+
+    private List<SchemeComparisonResponse> buildSchemeComparison(List<FinancingOption> rankedOptions) {
         List<SchemeComparisonResponse> comparisons = new ArrayList<>();
 
-        for (SchemesReference.Scheme scheme : schemesDataLoader.getApplicableSchemes(projectCost)) {
-            int repaymentMonths = (scheme.getTenureYears() * 12) - scheme.getMoratoriumMonths();
-            double monthlyRate = scheme.getInterestRate() / 12;
-            double emi = calculateEmi(projectCost * 0.90, monthlyRate, repaymentMonths);
+        for (int i = 0; i < rankedOptions.size() && i < MAX_COMPARISON_ROWS; i++) {
+            FinancingOption option = rankedOptions.get(i);
 
             SchemeComparisonResponse resp = new SchemeComparisonResponse();
-            resp.setSchemeName(scheme.getSchemeName());
-            resp.setInterestRate(round(scheme.getInterestRate() * 100, 2));
-            resp.setTenureYears(scheme.getTenureYears());
-            resp.setMoratoriumMonths(scheme.getMoratoriumMonths());
-            resp.setEmi(round(emi, 2));
-            resp.setAgency(scheme.getAgency());
-            resp.setSubsidyNote(scheme.getSubsidyNote());
-            resp.setPrimary(scheme.getSchemeName().equals(primaryScheme.getSchemeName()));
+            resp.setSchemeId(option.scheme().getSchemeId());
+            resp.setSchemeName(option.scheme().getName());
+            resp.setInterestRate(round(option.annualRate() * 100, 2));
+            resp.setTenureYears(option.tenureYears());
+            resp.setMoratoriumMonths(option.moratoriumMonths());
+            resp.setEmi(round(option.emi(), 2));
+            resp.setAgency(option.scheme().getImplementingAgency());
+            resp.setSubsidyNote(option.scheme().getEffectiveInterestRateNote());
+            resp.setPrimary(i == 0);
+            resp.setTotalRepayment(round(option.totalRepayment(), 2));
+            resp.setEstimatedSubsidy(option.subsidy() > 0 ? round(option.subsidy(), 2) : null);
+            resp.setNetCost(round(option.netCost(), 2));
+            resp.setRateEstimated(Boolean.TRUE.equals(option.scheme().getRateEstimated()));
+            resp.setAffordable(option.affordable());
+            resp.setEligibilityHuman(option.scheme().getEligibilityHuman());
+            resp.setDocumentsRequired(documentNames(option.scheme()));
+            resp.setApplicationSteps(option.scheme().getApplicationSteps());
+            resp.setPortalUrl(option.scheme().getPortalUrl());
             comparisons.add(resp);
         }
 
         return comparisons;
+    }
+
+    /** Just the document names, in dataset order - {@link Scheme#getDocumentsRequired()} carries mandatory/source detail this summary view doesn't need. */
+    private List<String> documentNames(Scheme scheme) {
+        List<JsonNode> docs = scheme.getDocumentsRequired();
+        if (docs == null || docs.isEmpty()) {
+            return null;
+        }
+        List<String> names = new ArrayList<>();
+        for (JsonNode doc : docs) {
+            String name = doc.path("name").asText(null);
+            if (name != null) {
+                names.add(name);
+            }
+        }
+        return names.isEmpty() ? null : names;
     }
 
     private String checkWorkingCapitalWarning(double availableMarginCapital, double recommendedProjectCost,

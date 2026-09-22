@@ -52,6 +52,8 @@
   "business_categories": [
     {
       "category_name": "Dairy",
+      "sector": "agri_allied",
+      "sub_sector": "dairy",
       "reference_project_cost": 1000000,
       "reference_cost_range": [650000, 1400000],
       "working_capital_months": 3,
@@ -72,6 +74,8 @@
     },
     {
       "category_name": "Tailoring",
+      "sector": "manufacturing",
+      "sub_sector": null,
       "reference_project_cost": 250000,
       "reference_cost_range": [150000, 350000],
       "working_capital_months": 2,
@@ -92,6 +96,8 @@
     },
     {
       "category_name": "Retail / Kirana Store",
+      "sector": "trading",
+      "sub_sector": null,
       "reference_project_cost": 500000,
       "reference_cost_range": [150000, 2000000],
       "working_capital_months": 2,
@@ -112,6 +118,8 @@
     },
     {
       "category_name": "Flour Mill",
+      "sector": "manufacturing",
+      "sub_sector": "food_processing",
       "reference_project_cost": 400000,
       "reference_cost_range": [200000, 600000],
       "working_capital_months": 2,

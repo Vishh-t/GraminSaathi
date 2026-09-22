@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/analyze", "/api/discover", "/api/simulate", "/api/goal-seek").permitAll()
                 .requestMatchers("/api/analyze/pdf").permitAll()
                 .requestMatchers("/api/reports/**").authenticated()
+                .requestMatchers("/api/profile/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

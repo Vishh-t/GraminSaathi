@@ -1,5 +1,11 @@
 import { formatCurrency, formatNumber } from '../utils/format';
 
+/** Long real scheme names (some run past 70 characters) would break the card's layout untruncated. */
+function truncateSchemeName(name, maxLength = 42) {
+  if (!name) return '';
+  return name.length > maxLength ? `${name.slice(0, maxLength - 1)}\u2026` : name;
+}
+
 export default function LoanComparisonCard({ financial, className = '' }) {
   const {
     projectCost,
@@ -15,8 +21,7 @@ export default function LoanComparisonCard({ financial, className = '' }) {
     bufferAmount,
   } = financial;
 
-  const isTermLoan = projectCost > 140000;
-  const primaryScheme = isTermLoan ? 'Term Loan Scheme' : 'Micro Finance Scheme';
+  const primaryScheme = truncateSchemeName(schemeName);
 
   return (
     <div className={`card ${className}`}>
@@ -32,7 +37,7 @@ export default function LoanComparisonCard({ financial, className = '' }) {
         <div className="border border-gray-200 rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-medium text-gray-900">Maximum Eligible</h4>
-            <span className="badge badge-info">{primaryScheme}</span>
+            <span className="badge badge-info" title={schemeName}>{primaryScheme}</span>
           </div>
           
           <div className="space-y-3">
