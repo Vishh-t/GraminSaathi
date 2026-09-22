@@ -17,6 +17,7 @@ import GoalSeekPage from './pages/GoalSeekPage';
 import ReportsPage from './pages/ReportsPage';
 import PostLoanPage from './pages/PostLoanPage';
 import ConnectNGOPage from './pages/ConnectNGOPage';
+import SchemesPage from './pages/SchemesPage';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -100,6 +101,11 @@ function AppRoutes() {
       <Route path="/connect-ngo" element={
         <ProtectedRoute>
           <ConnectNGOPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/schemes" element={
+        <ProtectedRoute>
+          <SchemesPage />
         </ProtectedRoute>
       } />
       

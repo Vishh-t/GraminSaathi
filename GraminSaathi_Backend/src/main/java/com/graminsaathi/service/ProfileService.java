@@ -36,10 +36,13 @@ public class ProfileService {
 
     /**
      * Merges {@code incoming} onto whatever is already saved and persists the result, so answering one
-     * more onboarding screen later never wipes out earlier answers.
+     * more onboarding screen later never wipes out earlier answers. Presence-aware: a key that's in
+     * {@code incoming} always wins - including an explicit {@code null}, which is how a chip toggled
+     * back OFF gets cleared - while a key simply absent from {@code incoming} leaves the saved value
+     * untouched.
      */
-    public ApplicantProfile saveApplicantProfile(User user, ApplicantProfile incoming) {
-        ApplicantProfile merged = merge(getApplicantProfile(user), incoming);
+    public ApplicantProfile saveApplicantProfile(User user, Map<String, Object> incoming) {
+        ApplicantProfile merged = mergePresenceAware(getApplicantProfile(user), incoming);
         try {
             user.setApplicantProfileJson(objectMapper.writeValueAsString(merged));
             userRepository.save(user);
@@ -49,11 +52,25 @@ public class ProfileService {
         return merged;
     }
 
+    /** Used only by {@link #saveApplicantProfile}, where the client always sends the full profile
+     *  object (see ApplicantIntakeModal) and a present-but-null field is a deliberate clear - unlike
+     *  {@link #merge}, which stays skip-null for the request-time overlay in AnalysisController, where
+     *  the incoming {@code applicant} really is partial and must never clear the saved profile. */
+    @SuppressWarnings("unchecked")
+    private ApplicantProfile mergePresenceAware(ApplicantProfile base, Map<String, Object> overrides) {
+        if (overrides == null) return base != null ? base : ApplicantProfile.builder().build();
+        Map<String, Object> baseMap = new LinkedHashMap<>(objectMapper.convertValue(base, Map.class));
+        baseMap.putAll(overrides);
+        return objectMapper.convertValue(baseMap, ApplicantProfile.class);
+    }
+
     /**
      * Field-by-field merge: any non-null field on {@code overrides} wins; otherwise the value from
-     * {@code base} is kept. Used both to fold new intake-form answers onto a saved profile, and to fold
-     * a request-supplied {@code applicant} (session-specific, one-off facts) onto the user's saved one
-     * at analysis time.
+     * {@code base} is kept. Used only at analyze time to fold a request-supplied {@code applicant}
+     * (session-specific, one-off facts that may genuinely be partial) onto the user's saved profile -
+     * skip-null is correct there since that request was never meant to clear saved answers. The
+     * ask-once intake form's own save path uses {@link #mergePresenceAware} instead, which does
+     * distinguish an explicit null from an absent field.
      */
     @SuppressWarnings("unchecked")
     public ApplicantProfile merge(ApplicantProfile base, ApplicantProfile overrides) {

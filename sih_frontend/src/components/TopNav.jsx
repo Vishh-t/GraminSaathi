@@ -9,6 +9,7 @@ const navItems = [
   { to: '/dashboard', key: 'nav.dashboard', fallback: 'Dashboard' },
   { to: '/discovery', key: 'nav.discovery', fallback: 'Discovery' },
   { to: '/analysis', key: 'nav.analysis', fallback: 'Analysis' },
+  { to: '/schemes', key: 'nav.schemes', fallback: 'Schemes' },
   { to: '/reports', key: 'nav.reports', fallback: 'Reports' },
   { to: '/map', key: 'nav.map', fallback: 'Map' },
 ];

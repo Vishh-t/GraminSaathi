@@ -21,7 +21,7 @@ import SchemeComparisonTable from '../components/SchemeComparisonTable';
 import UnlockMatchesBanner from '../components/UnlockMatchesBanner';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage, getErrorMessageFromBlob } from '../utils/errors';
-import { Loader2, FileText, MapPin, BarChart2, Download, Save, Lightbulb, Building2, Wallet, Search } from 'lucide-react';
+import { Loader2, FileText, MapPin, BarChart2, Download, Save, Lightbulb, Building2, Wallet, Search, Landmark } from 'lucide-react';
 
 const tabs = [
   { id: 'overview', label: 'analysis.tabs.overview' },
@@ -393,6 +393,24 @@ export default function AnalysisPage() {
         {activeTab === 'financials' && (
           <div className="space-y-6">
             <SchemeComparisonTable schemeComparison={financial.schemeComparison} />
+
+            <div className="card bg-primary-50/60 border-primary-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Landmark className="w-5 h-5 text-primary-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Only seeing loans?</p>
+                  <p className="text-sm text-gray-600 mt-0.5">
+                    This table only compares term loans. Browse every scheme you're eligible for — grants, subsidies and loan guarantees included.
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => navigate('/schemes')} className="btn-primary !py-2 text-sm flex items-center gap-1.5 flex-shrink-0">
+                <Landmark className="w-4 h-4" />
+                Browse all schemes
+              </button>
+            </div>
 
             <div className="card">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">

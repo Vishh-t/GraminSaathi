@@ -40,6 +40,11 @@ export const referenceAPI = {
   getSchemes: () => api.get('/schemes'),
 };
 
+export const schemesAPI = {
+  // body: { applicant, level, sector, state, calculationType, actualCost, loanAmount } - all optional.
+  match: (data) => api.post('/schemes/match', data),
+};
+
 export const profileAPI = {
   // Empty (all-null-field) object when the user hasn't answered the intake form yet.
   getApplicant: () => api.get('/profile/applicant'),
