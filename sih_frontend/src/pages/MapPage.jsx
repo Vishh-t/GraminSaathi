@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
+import { useAnalysisContext } from '../context/AnalysisContext';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
 import BusinessMap from '../components/BusinessMap';
@@ -13,11 +14,12 @@ export default function MapPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { village: ctxVillage, category: ctxCategory, capital: ctxCapital, updateContext } = useAnalysisContext();
 
   const [villages, setVillages] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedVillage, setSelectedVillage] = useState(searchParams.get('village') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedVillage, setSelectedVillage] = useState(searchParams.get('village') || ctxVillage || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || ctxCategory || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,11 +39,12 @@ export default function MapPage() {
       setVillages(vRes.data);
       setCategories(cRes.data);
 
-      // Default to whatever came in via the URL (e.g. from Discovery/Analysis);
-      // otherwise just fall back to the first entry so the map always has
-      // something to show instead of dead-ending the page.
-      const initialVillage = searchParams.get('village') || vRes.data[0]?.villageName || '';
-      const initialCategory = searchParams.get('category') || cRes.data[0]?.categoryName || '';
+      // Default to whatever came in via the URL (e.g. from Discovery/Analysis),
+      // then whatever was last used anywhere in the app; otherwise just fall
+      // back to the first entry so the map always has something to show
+      // instead of dead-ending the page.
+      const initialVillage = searchParams.get('village') || ctxVillage || vRes.data[0]?.villageName || '';
+      const initialCategory = searchParams.get('category') || ctxCategory || cRes.data[0]?.categoryName || '';
       setSelectedVillage(initialVillage);
       setSelectedCategory(initialCategory);
     } catch (err) {
@@ -53,6 +56,7 @@ export default function MapPage() {
 
   const handleVillageChange = (v) => {
     setSelectedVillage(v);
+    updateContext({ village: v });
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       next.set('village', v);
@@ -62,6 +66,7 @@ export default function MapPage() {
 
   const handleCategoryChange = (c) => {
     setSelectedCategory(c);
+    updateContext({ category: c });
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       next.set('category', c);
@@ -270,14 +275,14 @@ export default function MapPage() {
                   <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                   <div className="space-y-2">
                     <button
-                      onClick={() => navigate(`/analysis?village=${selectedVillage}&category=${selectedCategory}`)}
+                      onClick={() => navigate(`/analysis?village=${selectedVillage}&category=${selectedCategory}${ctxCapital ? `&capital=${ctxCapital}` : ''}`)}
                       className="btn-secondary w-full justify-start"
                     >
                       <MapPin className="w-4 h-4" />
                       View Full Analysis
                     </button>
                     <button
-                      onClick={() => navigate(`/simulator?village=${selectedVillage}&category=${selectedCategory}`)}
+                      onClick={() => navigate(`/simulator?village=${selectedVillage}&category=${selectedCategory}${ctxCapital ? `&capital=${ctxCapital}` : ''}`)}
                       className="btn-secondary w-full justify-start"
                     >
                       <BarChart2 className="w-4 h-4" />

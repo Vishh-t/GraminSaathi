@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { referenceAPI, analysisAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
+import { useAnalysisContext } from '../context/AnalysisContext';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
 import { formatCurrency } from '../utils/format';
@@ -12,6 +13,7 @@ export default function DiscoveryPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { village: ctxVillage, capital: ctxCapital, updateContext } = useAnalysisContext();
   const [villages, setVillages] = useState([]);
   const [selectedVillage, setSelectedVillage] = useState('');
   const [capital, setCapital] = useState('');
@@ -21,8 +23,10 @@ export default function DiscoveryPage() {
 
   useEffect(() => {
     loadVillages();
-    if (searchParams.get('village')) setSelectedVillage(searchParams.get('village'));
-    if (searchParams.get('capital')) setCapital(searchParams.get('capital'));
+    // URL params win (a real deep link); otherwise fall back to whatever was
+    // last used elsewhere in the app.
+    setSelectedVillage(searchParams.get('village') || ctxVillage || '');
+    setCapital(searchParams.get('capital') || ctxCapital || '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -56,6 +60,7 @@ export default function DiscoveryPage() {
   };
 
   const handleAnalyze = (business) => {
+    updateContext({ village: selectedVillage, category: business.categoryName, capital });
     navigate(`/analysis?village=${selectedVillage}&category=${business.categoryName}&capital=${capital}`);
   };
 

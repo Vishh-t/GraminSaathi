@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { analysisAPI, reportsAPI, referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import { useAuth } from '../context/AuthContext';
+import { useAnalysisContext } from '../context/AnalysisContext';
 import { useToast } from '../hooks/useToast';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
@@ -36,6 +37,7 @@ export default function AnalysisPage() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { village: ctxVillage, category: ctxCategory, capital: ctxCapital, updateContext } = useAnalysisContext();
   const [activeTab, setActiveTab] = useState('overview');
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -53,12 +55,25 @@ export default function AnalysisPage() {
   const [villages, setVillages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [refLoading, setRefLoading] = useState(true);
-  const [formVillage, setFormVillage] = useState(village || '');
-  const [formCategory, setFormCategory] = useState(category || '');
-  const [formCapital, setFormCapital] = useState(capital || '');
+  const [formVillage, setFormVillage] = useState(village || ctxVillage || '');
+  const [formCategory, setFormCategory] = useState(category || ctxCategory || '');
+  const [formCapital, setFormCapital] = useState(capital || ctxCapital || '');
 
   useEffect(() => {
     loadReferenceData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reached with no query params at all (a bare TopNav click, a Dashboard quick
+  // action, typing /analysis directly) but we remember the last village/
+  // category/capital that was actually analyzed - carry it forward once
+  // instead of dropping the person on an empty form they'd have to refill.
+  // An explicit deep link (Discovery, Map, a shared report) always keeps
+  // priority since this only fires when the URL has nothing at all.
+  useEffect(() => {
+    if (!hasParams && ctxVillage && ctxCategory && ctxCapital) {
+      navigate(`/analysis?village=${ctxVillage}&category=${ctxCategory}&capital=${ctxCapital}`, { replace: true });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -71,6 +86,9 @@ export default function AnalysisPage() {
   useEffect(() => {
     if (hasParams) {
       loadAnalysis();
+      // Remember this as the app's "last analyzed" context so Map, Simulator,
+      // and a bare revisit to this page can all pick it up without re-asking.
+      updateContext({ village, category, capital });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [village, category, capital]);
@@ -84,8 +102,8 @@ export default function AnalysisPage() {
       ]);
       setVillages(vRes.data);
       setCategories(cRes.data);
-      setFormVillage(prev => prev || village || vRes.data[0]?.villageName || '');
-      setFormCategory(prev => prev || category || cRes.data[0]?.categoryName || '');
+      setFormVillage(prev => prev || village || ctxVillage || vRes.data[0]?.villageName || '');
+      setFormCategory(prev => prev || category || ctxCategory || cRes.data[0]?.categoryName || '');
     } catch (err) {
       console.error('Failed to load reference data:', err);
     } finally {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { analysisAPI, referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
+import { useAnalysisContext } from '../context/AnalysisContext';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
 import SurvivalChart from '../components/SurvivalChart';
@@ -26,6 +27,7 @@ const costShockOptions = [
 export default function SimulatorPage() {
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
+  const { village: ctxVillage, category: ctxCategory, capital: ctxCapital, updateContext } = useAnalysisContext();
   const [village, setVillage] = useState('');
   const [category, setCategory] = useState('');
   const [capital, setCapital] = useState('');
@@ -40,9 +42,12 @@ export default function SimulatorPage() {
 
   useEffect(() => {
     loadReferenceData();
-    if (searchParams.get('village')) setVillage(searchParams.get('village'));
-    if (searchParams.get('category')) setCategory(searchParams.get('category'));
-    if (searchParams.get('capital')) setCapital(searchParams.get('capital'));
+    // URL params win when present; otherwise fall back to whatever was last
+    // used anywhere else in the app (Analysis, Map, Discovery) so this page
+    // never opens to a blank "pick everything again" state.
+    setVillage(searchParams.get('village') || ctxVillage || '');
+    setCategory(searchParams.get('category') || ctxCategory || '');
+    setCapital(searchParams.get('capital') || ctxCapital || '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -76,6 +81,7 @@ export default function SimulatorPage() {
         costShockPct: costShock,
       });
       setResult(res.data);
+      updateContext({ village, category, capital });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

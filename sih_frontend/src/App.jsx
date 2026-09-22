@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { I18nProvider } from './i18n/i18n';
 import { AuthProvider } from './context/AuthContext';
+import { AnalysisContextProvider } from './context/AnalysisContext';
 import { ToastProvider } from './hooks/useToast';
 import { useAuth } from './context/AuthContext';
 import AppErrorBoundary from './components/AppErrorBoundary';
@@ -121,11 +122,13 @@ export default function App() {
     <AppErrorBoundary>
       <I18nProvider>
         <AuthProvider>
-          <ToastProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </ToastProvider>
+          <AnalysisContextProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </ToastProvider>
+          </AnalysisContextProvider>
         </AuthProvider>
       </I18nProvider>
     </AppErrorBoundary>

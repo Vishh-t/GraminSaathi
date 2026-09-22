@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { referenceAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import { useAuth } from '../context/AuthContext';
+import { useAnalysisContext } from '../context/AnalysisContext';
 import { useVoice, extractEntities } from '../hooks/useVoice';
 import VoiceButton from '../components/VoiceButton';
 import TopNav from '../components/TopNav';
@@ -83,6 +84,7 @@ export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { village: ctxVillage, category: ctxCategory, capital: ctxCapital } = useAnalysisContext();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -90,14 +92,22 @@ export default function DashboardPage() {
 
   const { isListening, transcript, error, startListening, speak, clearTranscript } = useVoice(language === 'hi' ? 'hi-IN' : 'en-IN');
 
+  // A voice-extracted entity from this session always wins (the person just
+  // said it); otherwise fall back to whatever was last used anywhere else in
+  // the app, so these quick actions land on real results instead of an empty
+  // form even when nothing's been spoken this visit.
+  const effectiveVillage = prefillData?.village || ctxVillage;
+  const effectiveCategory = prefillData?.category || ctxCategory;
+  const effectiveCapital = prefillData?.capital || ctxCapital;
+
   const handleQuickReply = (action) => {
     switch (action) {
       case 'discovery':
         navigate('/discovery');
         break;
       case 'analysis':
-        if (prefillData) {
-          navigate(`/analysis?village=${prefillData.village}&category=${prefillData.category}&capital=${prefillData.capital}`);
+        if (effectiveVillage && effectiveCategory && effectiveCapital) {
+          navigate(`/analysis?village=${effectiveVillage}&category=${effectiveCategory}&capital=${effectiveCapital}`);
         } else {
           navigate('/analysis');
         }
@@ -106,7 +116,11 @@ export default function DashboardPage() {
         navigate('/goal-seek');
         break;
       case 'simulator':
-        navigate('/simulator');
+        if (effectiveVillage && effectiveCategory && effectiveCapital) {
+          navigate(`/simulator?village=${effectiveVillage}&category=${effectiveCategory}&capital=${effectiveCapital}`);
+        } else {
+          navigate('/simulator');
+        }
         break;
       case 'voice':
         startListening();
