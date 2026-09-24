@@ -24,3 +24,6 @@ sih_frontend/*.local
 sih_frontend/.env
 sih_frontend/.env.local
 sih_frontend/*.log
+
+# === Raw data dumps (local only, not part of the repo) ===
+Population Data Csv/

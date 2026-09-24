@@ -37,7 +37,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/villages", "/api/business-categories", "/api/schemes", "/api/schemes/**").permitAll()
+                .requestMatchers("/api/villages", "/api/villages/search", "/api/business-categories", "/api/schemes", "/api/schemes/**").permitAll()
                 .requestMatchers("/api/analyze", "/api/discover", "/api/simulate", "/api/goal-seek").permitAll()
                 .requestMatchers("/api/analyze/pdf").permitAll()
                 .requestMatchers("/api/reports/**").authenticated()
