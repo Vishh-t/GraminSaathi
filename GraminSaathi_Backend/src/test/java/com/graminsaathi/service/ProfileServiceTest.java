@@ -7,6 +7,8 @@ import com.graminsaathi.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -69,7 +71,7 @@ class ProfileServiceTest {
         User user = new User();
         user.setApplicantProfileJson("{\"age\":30,\"category\":\"general\"}");
 
-        ApplicantProfile saved = profileService.saveApplicantProfile(user, ApplicantProfile.builder().age(45).build());
+        ApplicantProfile saved = profileService.saveApplicantProfile(user, Map.of("age", 45));
 
         assertEquals(45, saved.getAge());
         assertEquals("general", saved.getCategory()); // preserved from the earlier save, not wiped

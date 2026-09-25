@@ -3,6 +3,7 @@ package com.graminsaathi.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -20,7 +21,9 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "idx_villages_name_norm", columnList = "name_normalized"),
                 @Index(name = "idx_villages_state", columnList = "state"),
-                @Index(name = "idx_villages_district", columnList = "district")
+                @Index(name = "idx_villages_district", columnList = "district"),
+                @Index(name = "idx_villages_state_district", columnList = "state, district"),
+                @Index(name = "idx_villages_lat_lon", columnList = "latitude, longitude")
         }
 )
 @Data
@@ -53,6 +56,30 @@ public class Village {
 
     private Double latitude;
     private Double longitude;
+
+    /** Where {@link #latitude}/{@link #longitude} came from (e.g. "shrug_pc11", "osm_place"). Null until phase 1 loads coordinates. */
+    @Column(name = "coordinates_source", length = 64)
+    private String coordinatesSource;
+
+    @Column(name = "coordinates_as_of")
+    private LocalDate coordinatesAsOf;
+
+    /**
+     * Census 2011 PC11 codes (State/District/Subdistt/Town-Village, as published in the PCA source CSV) -
+     * the join key used by SHRUG's village polygons for step 2 phase 1. Nullable: rows imported before this
+     * column existed, and the 3 demo-seed villages, have none. NOT the same as {@link #lgdCode}.
+     */
+    @Column(name = "pc11_state_code", length = 8)
+    private String pc11StateCode;
+
+    @Column(name = "pc11_district_code", length = 8)
+    private String pc11DistrictCode;
+
+    @Column(name = "pc11_subdistrict_code", length = 8)
+    private String pc11SubdistrictCode;
+
+    @Column(name = "pc11_village_code", length = 8)
+    private String pc11VillageCode;
 
     @Column(name = "population_2011")
     private Integer population2011;

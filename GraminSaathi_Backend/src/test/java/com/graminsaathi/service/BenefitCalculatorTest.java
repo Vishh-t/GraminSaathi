@@ -19,7 +19,7 @@ class BenefitCalculatorTest {
 
     @Test
     void pctOfCostCappedComputesWhenCostIsKnown() {
-        Scheme s = scheme(benefit("pct_of_cost_capped", 80, 500000, null));
+        Scheme s = scheme(benefit("pct_of_cost_capped", 80.0, 500000.0, null));
         BenefitResult r = calculator.calculate(s, new BenefitInput(1000000.0, null));
         assertEquals("pct_of_cost_capped", r.calculationType());
         assertEquals(500000.0, r.amount()); // 80% of 10L = 8L, capped at 5L
@@ -27,14 +27,14 @@ class BenefitCalculatorTest {
 
     @Test
     void pctOfCostCappedUncappedWhenNoMaxGiven() {
-        Scheme s = scheme(benefit("pct_of_cost_capped", 40, null, null));
+        Scheme s = scheme(benefit("pct_of_cost_capped", 40.0, null, null));
         BenefitResult r = calculator.calculate(s, new BenefitInput(1000000.0, null));
         assertEquals(400000.0, r.amount());
     }
 
     @Test
     void pctOfCostCappedFallsBackToTextWithoutACost() {
-        Scheme s = scheme(benefit("pct_of_cost_capped", 80, 500000, null));
+        Scheme s = scheme(benefit("pct_of_cost_capped", 80.0, 500000.0, null));
         BenefitResult r = calculator.calculate(s, BenefitInput.EMPTY);
         assertNull(r.amount());
         assertTrue(r.displayText().contains("80%"));
@@ -45,14 +45,14 @@ class BenefitCalculatorTest {
 
     @Test
     void pctOfLoanCappedComputesWhenLoanIsKnown() {
-        Scheme s = scheme(benefit("pct_of_loan_capped", 10, 25000, null));
+        Scheme s = scheme(benefit("pct_of_loan_capped", 10.0, 25000.0, null));
         BenefitResult r = calculator.calculate(s, new BenefitInput(null, 500000.0));
         assertEquals(25000.0, r.amount()); // 10% of 5L = 50k, capped at 25k
     }
 
     @Test
     void pctOfLoanUncappedHasNoCeiling() {
-        Scheme s = benefitOnlyScheme("pct_of_loan_uncapped", 15, null);
+        Scheme s = benefitOnlyScheme("pct_of_loan_uncapped", 15.0, null);
         BenefitResult r = calculator.calculate(s, new BenefitInput(null, 200000.0));
         assertEquals(30000.0, r.amount());
         assertTrue(r.displayText().contains("no upper cap"));
@@ -63,7 +63,7 @@ class BenefitCalculatorTest {
     @Test
     void interestRateReductionUsesTheStoredRateDirectlyWhenPresent() {
         // Annasaheb Patil shape: interest_rate=0, subsidy_pct=100 - a 0% loan, NOT "0 - 100"
-        Scheme s = scheme(benefit("interest_rate_reduction", 100, null, null));
+        Scheme s = scheme(benefit("interest_rate_reduction", 100.0, null, null));
         s.setInterestRate(0.0);
         BenefitResult r = calculator.calculate(s, BenefitInput.EMPTY);
         assertEquals(0.0, r.effectiveInterestRatePct());
@@ -73,7 +73,7 @@ class BenefitCalculatorTest {
     @Test
     void interestRateReductionFallsBackToSubsidyPctWhenNoRateStored() {
         // Rajasthan MLUPY shape: no interest_rate on file, subsidy_pct is a genuine points-off figure
-        Scheme s = scheme(benefit("interest_rate_reduction", 8, null, null));
+        Scheme s = scheme(benefit("interest_rate_reduction", 8.0, null, null));
         BenefitResult r = calculator.calculate(s, BenefitInput.EMPTY);
         assertNull(r.effectiveInterestRatePct());
         assertTrue(r.displayText().contains("8"));
@@ -93,7 +93,7 @@ class BenefitCalculatorTest {
 
     @Test
     void guaranteeCoverPctNeverProducesACashAmount() {
-        Scheme s = scheme(benefit("guarantee_cover_pct", 85, 100000000, 100000000));
+        Scheme s = scheme(benefit("guarantee_cover_pct", 85.0, 100000000.0, 100000000.0));
         BenefitResult r = calculator.calculate(s, new BenefitInput(1000000.0, 900000.0));
         assertNull(r.amount());
         assertEquals(85.0, r.guaranteeCoverPct());
@@ -105,7 +105,7 @@ class BenefitCalculatorTest {
 
     @Test
     void perUnitOrInKindMatchesPctOfCostCapped() {
-        Scheme s = scheme(benefit("per_unit_or_in_kind", 100, 20000, null));
+        Scheme s = scheme(benefit("per_unit_or_in_kind", 100.0, 20000.0, null));
         BenefitResult r = calculator.calculate(s, new BenefitInput(50000.0, null));
         assertEquals("per_unit_or_in_kind", r.calculationType());
         assertEquals(20000.0, r.amount()); // 100% of 50k = 50k, capped at 20k
@@ -143,7 +143,7 @@ class BenefitCalculatorTest {
     @Test
     void compositeComputesEachSharedComponentSeparatelyAndNeverSums() {
         // PM Vishwakarma shape: one benefit block, two component type names
-        Scheme s = scheme(benefitWithComponents(null, 15000, 300000, "pct_of_cost_capped", "pct_of_loan_uncapped"));
+        Scheme s = scheme(benefitWithComponents(null, 15000.0, 300000.0, "pct_of_cost_capped", "pct_of_loan_uncapped"));
         BenefitResult r = calculator.calculate(s, new BenefitInput(15000.0, 300000.0));
 
         assertEquals("composite", r.calculationType());
@@ -162,7 +162,7 @@ class BenefitCalculatorTest {
     @Test
     void compositeWithASingleComponentStillWorks() {
         // YSR Cheyutha shape: composite with only one listed component
-        Scheme s = scheme(benefitWithComponents(100, 75000, null, "pct_of_cost_capped"));
+        Scheme s = scheme(benefitWithComponents(100.0, 75000.0, null, "pct_of_cost_capped"));
         BenefitResult r = calculator.calculate(s, new BenefitInput(75000.0, null));
         assertEquals(1, r.components().size());
         assertEquals(75000.0, r.components().get(0).amount());
@@ -182,19 +182,21 @@ class BenefitCalculatorTest {
     }
 
     private static JsonNode benefit(String calculationType, Double subsidyPct, Double maxSubsidyAmount, Double onLoanUpto) {
+        // put(String, Double) writes a real JSON null (NullNode) for null values, matching the dataset;
+        // putPOJO(..., null) would create a POJONode that asDouble() reads as 0.0.
         return MAPPER.createObjectNode()
                 .put("calculation_type", calculationType)
-                .putPOJO("subsidy_pct", subsidyPct)
-                .putPOJO("max_subsidy_amount", maxSubsidyAmount)
-                .putPOJO("on_loan_upto", onLoanUpto);
+                .put("subsidy_pct", subsidyPct)
+                .put("max_subsidy_amount", maxSubsidyAmount)
+                .put("on_loan_upto", onLoanUpto);
     }
 
     private static JsonNode benefitWithComponents(Double subsidyPct, Double maxSubsidyAmount, Double onLoanUpto, String... components) {
         var node = MAPPER.createObjectNode()
                 .put("calculation_type", "composite")
-                .putPOJO("subsidy_pct", subsidyPct)
-                .putPOJO("max_subsidy_amount", maxSubsidyAmount)
-                .putPOJO("on_loan_upto", onLoanUpto);
+                .put("subsidy_pct", subsidyPct)
+                .put("max_subsidy_amount", maxSubsidyAmount)
+                .put("on_loan_upto", onLoanUpto);
         var arr = node.putArray("calculation_components");
         for (String c : components) arr.add(c);
         return node;

@@ -1,8 +1,12 @@
 package com.graminsaathi.service;
 
-import com.graminsaathi.data.DemoData;
-import com.graminsaathi.data.DemoDataLoader;
+import com.graminsaathi.dto.request.ApplicantProfile;
 import com.graminsaathi.dto.request.DiscoverRequest;
+import com.graminsaathi.model.BusinessCategory;
+import com.graminsaathi.model.Village;
+import com.graminsaathi.repository.BusinessCategoryRepository;
+import com.graminsaathi.repository.VillageFeaturesRepository;
+import com.graminsaathi.repository.VillageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,61 +14,81 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 
+/**
+ * Rewritten for the real-data DiscoveryService (villages/village_features/business_categories +
+ * HardFilterService/PersonFitScoreService/DemandSupplyScoreService/FinancialRangeService) - see
+ * Project_Docs/RECOMMENDATION_ENGINE_BUILD_LOG.md, "Discovery wiring" section. The old version mocked
+ * DemoDataLoader/FeasibilityScoreService, which DiscoveryService no longer depends on.
+ */
 @ExtendWith(MockitoExtension.class)
 class DiscoveryServiceTest {
 
     @Mock
-    private DemoDataLoader demoDataLoader;
-
+    private VillageRepository villageRepository;
     @Mock
-    private FeasibilityScoreService feasibilityScoreService;
-
+    private VillageFeaturesRepository villageFeaturesRepository;
     @Mock
-    private FinancialCalculatorService financialCalculatorService;
+    private BusinessCategoryRepository businessCategoryRepository;
+    @Mock
+    private HardFilterService hardFilterService;
+    @Mock
+    private PersonFitScoreService personFitScoreService;
+    @Mock
+    private DemandSupplyScoreService demandSupplyScoreService;
+    @Mock
+    private FinancialRangeService financialRangeService;
 
     private DiscoveryService discoveryService;
 
+    private final ApplicantProfile applicant = ApplicantProfile.builder().build();
+
     @BeforeEach
     void setUp() {
-        discoveryService = new DiscoveryService(demoDataLoader, feasibilityScoreService, financialCalculatorService);
+        discoveryService = new DiscoveryService(villageRepository, villageFeaturesRepository,
+                businessCategoryRepository, hardFilterService, personFitScoreService,
+                demandSupplyScoreService, financialRangeService);
+    }
+
+    private static FinancialRangeService.FinancialRangeResult emptyFinancialRange() {
+        FinancialRangeService.MonthlyRange zero = new FinancialRangeService.MonthlyRange(0, 0, 0);
+        return new FinancialRangeService.FinancialRangeResult(zero, zero, zero, 1.0);
+    }
+
+    private static DemandSupplyScoreService.ScoreResult noDataYet() {
+        return new DemandSupplyScoreService.ScoreResult(
+                DemandSupplyScoreService.Confidence.INSUFFICIENT_NO_POPULATION,
+                null, null, null, null, "No population projection for this village yet.");
     }
 
     @Test
-    void testDiscoveryReturnsSortedBusinesses() {
-        DemoData.VillageData village = new DemoData.VillageData();
-        village.setVillageName("Ghoti");
+    void testDiscoveryReturnsSortedByPersonFitScore() {
+        Village village = Village.builder().id(1L).name("Ghoti").nameNormalized("ghoti").build();
+        when(villageRepository.findFirstByNameNormalized("ghoti")).thenReturn(Optional.of(village));
+        when(villageFeaturesRepository.findById(1L)).thenReturn(Optional.empty());
 
-        when(demoDataLoader.getVillage("Ghoti")).thenReturn(village);
+        BusinessCategory dairy = BusinessCategory.builder().categoryName("Dairy")
+                .referenceProjectCost(1000000.0).referenceMonthlyRevenue(45000.0).referenceMonthlyOperatingCost(31500.0).build();
+        BusinessCategory tailoring = BusinessCategory.builder().categoryName("Tailoring")
+                .referenceProjectCost(250000.0).referenceMonthlyRevenue(18000.0).referenceMonthlyOperatingCost(12600.0).build();
 
-        DemoData.BusinessCategoryData dairy = new DemoData.BusinessCategoryData();
-        dairy.setCategoryName("Dairy");
-        dairy.setReferenceProjectCost(1000000.0);
-        dairy.setReferenceMonthlyRevenue(45000.0);
-        dairy.setReferenceMonthlyOperatingCost(31500.0);
+        when(businessCategoryRepository.findAll()).thenReturn(List.of(dairy, tailoring));
+        when(hardFilterService.evaluate(any(), any(), any())).thenReturn(HardFilterService.FilterResult.pass());
+        when(demandSupplyScoreService.calculate(any(), any(), any())).thenReturn(noDataYet());
+        when(financialRangeService.calculate(any(), any())).thenReturn(emptyFinancialRange());
 
-        DemoData.BusinessCategoryData tailoring = new DemoData.BusinessCategoryData();
-        tailoring.setCategoryName("Tailoring");
-        tailoring.setReferenceProjectCost(250000.0);
-        tailoring.setReferenceMonthlyRevenue(18000.0);
-        tailoring.setReferenceMonthlyOperatingCost(12600.0);
-
-        when(demoDataLoader.getAllBusinessCategories()).thenReturn(List.of(dairy, tailoring));
-        when(demoDataLoader.getBusinessData("Ghoti", "Dairy")).thenReturn(createBusinessData(2, 42.0));
-        when(demoDataLoader.getBusinessData("Ghoti", "Tailoring")).thenReturn(createBusinessData(11, 250.0));
-
-        when(feasibilityScoreService.calculate("Ghoti", "Dairy")).thenReturn(
-                new FeasibilityScoreService.FeasibilityResult(85, "High opportunity", 2, 8420, 4210.0)
-        );
-        when(feasibilityScoreService.calculate("Ghoti", "Tailoring")).thenReturn(
-                new FeasibilityScoreService.FeasibilityResult(45, "Moderate opportunity", 11, 8420, 765.0)
-        );
+        when(personFitScoreService.calculate(eq(dairy), any(), anyDouble())).thenReturn(
+                new PersonFitScoreService.FitResult(85, "Strong fit", 85.0, null, 50.0, List.of()));
+        when(personFitScoreService.calculate(eq(tailoring), any(), anyDouble())).thenReturn(
+                new PersonFitScoreService.FitResult(45, "Moderate fit", 45.0, null, 50.0, List.of()));
 
         DiscoveryService.DiscoveryResult result = discoveryService.discover(
-                new DiscoverRequest("Ghoti", 100000.0)
+                new DiscoverRequest("Ghoti", 100000.0), applicant
         );
 
         assertEquals(2, result.businesses().size());
@@ -74,25 +98,22 @@ class DiscoveryServiceTest {
 
     @Test
     void testAffordabilityFlagWithinBudget() {
-        DemoData.VillageData village = new DemoData.VillageData();
-        village.setVillageName("Ghoti");
-        when(demoDataLoader.getVillage("Ghoti")).thenReturn(village);
+        Village village = Village.builder().id(1L).name("Ghoti").nameNormalized("ghoti").build();
+        when(villageRepository.findFirstByNameNormalized("ghoti")).thenReturn(Optional.of(village));
+        when(villageFeaturesRepository.findById(1L)).thenReturn(Optional.empty());
 
-        DemoData.BusinessCategoryData category = new DemoData.BusinessCategoryData();
-        category.setCategoryName("Test");
-        category.setReferenceProjectCost(50000.0);
-        category.setReferenceMonthlyRevenue(10000.0);
-        category.setReferenceMonthlyOperatingCost(5000.0);
-
-        when(demoDataLoader.getAllBusinessCategories()).thenReturn(List.of(category));
-        when(demoDataLoader.getBusinessData("Ghoti", "Test")).thenReturn(createBusinessData(5, 100.0));
-        when(feasibilityScoreService.calculate("Ghoti", "Test")).thenReturn(
-                new FeasibilityScoreService.FeasibilityResult(60, "Moderate opportunity", 5, 10000, 2000.0)
-        );
+        BusinessCategory category = BusinessCategory.builder().categoryName("Test")
+                .referenceProjectCost(50000.0).referenceMonthlyRevenue(10000.0).referenceMonthlyOperatingCost(5000.0).build();
+        when(businessCategoryRepository.findAll()).thenReturn(List.of(category));
+        when(hardFilterService.evaluate(eq(category), any(), any())).thenReturn(HardFilterService.FilterResult.pass());
+        when(demandSupplyScoreService.calculate(eq(village), any(), eq(category))).thenReturn(noDataYet());
+        when(financialRangeService.calculate(eq(category), any())).thenReturn(emptyFinancialRange());
+        when(personFitScoreService.calculate(eq(category), any(), anyDouble())).thenReturn(
+                new PersonFitScoreService.FitResult(60, "Moderate fit", 60.0, null, 50.0, List.of()));
 
         // margin = 100000 -> project_cost = 1000000 >= 50000
         DiscoveryService.DiscoveryResult result = discoveryService.discover(
-                new DiscoverRequest("Ghoti", 100000.0)
+                new DiscoverRequest("Ghoti", 100000.0), applicant
         );
 
         assertEquals("Within budget", result.businesses().get(0).affordabilityFlag());
@@ -100,25 +121,22 @@ class DiscoveryServiceTest {
 
     @Test
     void testAffordabilityFlagMayRequirePhasing() {
-        DemoData.VillageData village = new DemoData.VillageData();
-        village.setVillageName("Ghoti");
-        when(demoDataLoader.getVillage("Ghoti")).thenReturn(village);
+        Village village = Village.builder().id(1L).name("Ghoti").nameNormalized("ghoti").build();
+        when(villageRepository.findFirstByNameNormalized("ghoti")).thenReturn(Optional.of(village));
+        when(villageFeaturesRepository.findById(1L)).thenReturn(Optional.empty());
 
-        DemoData.BusinessCategoryData category = new DemoData.BusinessCategoryData();
-        category.setCategoryName("Test");
-        category.setReferenceProjectCost(2000000.0);
-        category.setReferenceMonthlyRevenue(10000.0);
-        category.setReferenceMonthlyOperatingCost(5000.0);
-
-        when(demoDataLoader.getAllBusinessCategories()).thenReturn(List.of(category));
-        when(demoDataLoader.getBusinessData("Ghoti", "Test")).thenReturn(createBusinessData(5, 100.0));
-        when(feasibilityScoreService.calculate("Ghoti", "Test")).thenReturn(
-                new FeasibilityScoreService.FeasibilityResult(60, "Moderate opportunity", 5, 10000, 2000.0)
-        );
+        BusinessCategory category = BusinessCategory.builder().categoryName("Test")
+                .referenceProjectCost(2000000.0).referenceMonthlyRevenue(10000.0).referenceMonthlyOperatingCost(5000.0).build();
+        when(businessCategoryRepository.findAll()).thenReturn(List.of(category));
+        when(hardFilterService.evaluate(eq(category), any(), any())).thenReturn(HardFilterService.FilterResult.pass());
+        when(demandSupplyScoreService.calculate(eq(village), any(), eq(category))).thenReturn(noDataYet());
+        when(financialRangeService.calculate(eq(category), any())).thenReturn(emptyFinancialRange());
+        when(personFitScoreService.calculate(eq(category), any(), anyDouble())).thenReturn(
+                new PersonFitScoreService.FitResult(60, "Moderate fit", 60.0, null, 50.0, List.of()));
 
         // margin = 10000 -> project_cost = 100000 < 2000000
         DiscoveryService.DiscoveryResult result = discoveryService.discover(
-                new DiscoverRequest("Ghoti", 10000.0)
+                new DiscoverRequest("Ghoti", 10000.0), applicant
         );
 
         assertEquals("May require phasing", result.businesses().get(0).affordabilityFlag());
@@ -126,17 +144,10 @@ class DiscoveryServiceTest {
 
     @Test
     void testVillageNotFound() {
-        when(demoDataLoader.getVillage("Unknown")).thenReturn(null);
+        when(villageRepository.findFirstByNameNormalized("unknown")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> discoveryService.discover(
-                new DiscoverRequest("Unknown", 10000.0)
+                new DiscoverRequest("Unknown", 10000.0), applicant
         ));
-    }
-
-    private DemoData.BusinessData createBusinessData(int competitors, Double price) {
-        DemoData.BusinessData data = new DemoData.BusinessData();
-        data.setCompetitorCount(competitors);
-        data.setAvgLocalPrice(price);
-        return data;
     }
 }

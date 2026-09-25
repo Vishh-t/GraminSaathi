@@ -1,0 +1,75 @@
+package com.graminsaathi.service;
+
+import com.graminsaathi.service.PopulationProjector.Projection;
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class PopulationProjectorTest {
+
+    private static final double RURAL_DECADAL_PCT = 12.18;
+
+    private final PopulationProjector projector = new PopulationProjector(RURAL_DECADAL_PCT, Map.of());
+
+    @Test
+    void censusYearReturnsTheRawFigures() {
+        Projection p = projector.project(1000, 200, "GOA", 2011);
+        assertEquals(1000, p.population());
+        assertEquals(200, p.households());
+    }
+
+    @Test
+    void oneFullDecadeAppliesTheDecadalRateExactly() {
+        Projection p = projector.project(1000, 200, "GOA", 2021);
+        assertEquals(1122, p.population());   // 1000 * 1.1218 = 1121.8
+        assertEquals(224, p.households());    // 200 * 1.1218 = 224.36
+        assertEquals(2021, p.projectionYear());
+        assertEquals(RURAL_DECADAL_PCT, p.decadalGrowthPct());
+    }
+
+    @Test
+    void halfADecadeCompoundsRatherThanScalingLinearly() {
+        Projection p = projector.project(1000, null, "GOA", 2016);
+        assertEquals(1059, p.population());   // 1.1218 ^ 0.5 ~ 1.0591 (linear would give 1061)
+    }
+
+    @Test
+    void avgHouseholdSizeUsesTheRawCensusFigures() {
+        Projection p = projector.project(1000, 200, "GOA", 2026);
+        assertEquals(5.0, p.avgHouseholdSize());
+    }
+
+    @Test
+    void unknownPopulationGivesNoProjectionInsteadOfAGuess() {
+        assertNull(projector.project(null, 200, "GOA", 2026));
+        assertNull(projector.project(0, 200, "GOA", 2026));
+    }
+
+    @Test
+    void unknownHouseholdsLeaveHouseholdFieldsNullButStillProjectPopulation() {
+        Projection p = projector.project(1000, null, "GOA", 2021);
+        assertEquals(1122, p.population());
+        assertNull(p.households());
+        assertNull(p.avgHouseholdSize());
+    }
+
+    @Test
+    void stateOverrideBeatsTheNationalDefaultCaseInsensitively() {
+        PopulationProjector withOverride = new PopulationProjector(RURAL_DECADAL_PCT, Map.of("Goa", 10.0));
+        Projection goa = withOverride.project(1000, 200, "GOA", 2021);
+        assertEquals(1100, goa.population());
+        assertEquals(10.0, goa.decadalGrowthPct());
+        assertTrue(goa.growthSource().contains("Goa"));
+
+        Projection other = withOverride.project(1000, 200, "BIHAR", 2021);
+        assertEquals(RURAL_DECADAL_PCT, other.decadalGrowthPct());
+        assertEquals(PopulationProjector.DEFAULT_SOURCE, other.growthSource());
+    }
+
+    @Test
+    void yearBeforeTheCensusIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> projector.project(1000, 200, "GOA", 2005));
+    }
+}

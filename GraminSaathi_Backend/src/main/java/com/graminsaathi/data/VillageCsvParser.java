@@ -32,7 +32,8 @@ public final class VillageCsvParser {
     public record Row(
             String lgdCode, String name, String block, String district, String state,
             Double latitude, Double longitude,
-            Integer population2011, Integer households2011, String source
+            Integer population2011, Integer households2011, String source,
+            String pc11StateCode, String pc11DistrictCode, String pc11SubdistrictCode, String pc11VillageCode
     ) {}
 
     /**
@@ -77,7 +78,9 @@ public final class VillageCsvParser {
                         get(f, col, "lgd_code"), name, get(f, col, "block"), district, state,
                         toDouble(get(f, col, "latitude")), toDouble(get(f, col, "longitude")),
                         toInt(get(f, col, "population_2011")), toInt(get(f, col, "households_2011")),
-                        get(f, col, "source")
+                        get(f, col, "source"),
+                        get(f, col, "pc11_state_code"), get(f, col, "pc11_district_code"),
+                        get(f, col, "pc11_subdistrict_code"), get(f, col, "pc11_village_code")
                 );
                 rowConsumer.accept(row);
             } catch (NumberFormatException e) {
