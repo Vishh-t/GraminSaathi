@@ -75,7 +75,7 @@ public final class VillageCsvParser {
             }
             try {
                 Row row = new Row(
-                        get(f, col, "lgd_code"), name, get(f, col, "block"), district, state,
+                        normalizeLgdCode(get(f, col, "lgd_code")), name, get(f, col, "block"), district, state,
                         toDouble(get(f, col, "latitude")), toDouble(get(f, col, "longitude")),
                         toInt(get(f, col, "population_2011")), toInt(get(f, col, "households_2011")),
                         get(f, col, "source"),
@@ -107,6 +107,21 @@ public final class VillageCsvParser {
 
     private static Integer toInt(String s) {
         return s == null ? null : Integer.valueOf(s.replace(",", ""));
+    }
+
+    /**
+     * Strips a trailing ".0" from an lgd_code value. Every source CSV in this pipeline (the original
+     * village_processor.py master files, and every downstream enrichment CSV keyed on lgd_code) went
+     * through pandas at some point, and any column pandas can't keep as a clean int (one blank/NaN cell
+     * anywhere in that column is enough) gets silently upcast to float64 - so "645200" round-trips through
+     * to_csv as "645200.0". This has been true since the very first import; every join in this codebase
+     * has so far matched dirty-to-dirty (both sides carry the same suffix) so it never surfaced as a bug,
+     * but it corrupts lgd_code the moment it's compared against a clean value (a human-written query, a
+     * future external LGD source, or anything shown to a user). Package-private so
+     * {@link MarketSignalsCsvParser} can reuse it on its own lgd_code column.
+     */
+    static String normalizeLgdCode(String s) {
+        return s != null && s.endsWith(".0") ? s.substring(0, s.length() - 2) : s;
     }
 
     static List<String> splitLine(String line) {

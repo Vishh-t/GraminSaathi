@@ -143,16 +143,26 @@ export default function DiscoveryPage() {
                   <span className="pill bg-surface-container text-gray-600">Sort: Highest Score</span>
                 </div>
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {results.map((business) => (
+                  {results.map((business) => {
+                    // marketScore (real demand-vs-competition data) is null until step 2b/HCES land for
+                    // this village - fall back to personFitScore (always computable) so the card still
+                    // has a meaningful color/score instead of always reading as "undefined"/red.
+                    const displayScore = business.marketScore ?? business.personFitScore;
+                    const fitPillColor = business.personFitLabel === 'Strong fit'
+                      ? 'bg-green-100 text-green-700'
+                      : business.personFitLabel === 'Moderate fit'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700';
+                    return (
                     <div
                       key={business.categoryName}
                       className="bg-white rounded-lg border border-gray-200 border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col"
-                      style={{ borderLeftColor: business.opportunityScore >= 75 ? '#16a34a' : business.opportunityScore >= 50 ? '#f59e0b' : '#dc2626' }}
+                      style={{ borderLeftColor: displayScore >= 75 ? '#16a34a' : displayScore >= 50 ? '#f59e0b' : '#dc2626' }}
                     >
                       <div className="h-28 bg-gradient-to-br from-primary-700 to-primary-500 flex items-center justify-center relative">
                         <Store className="w-10 h-10 text-white/70" />
                         <span className="absolute top-2 right-2 pill bg-black/40 text-white backdrop-blur-sm text-[11px]">
-                          Score: {business.opportunityScore}/100
+                          {business.marketScore != null ? `Market: ${business.marketScore}/100` : `Fit: ${business.personFitScore}/100`}
                         </span>
                       </div>
                       <div className="p-4 flex flex-col flex-1">
@@ -162,10 +172,13 @@ export default function DiscoveryPage() {
                           }`}>
                             {business.affordabilityFlag}
                           </span>
+                          <span className={`pill text-[11px] ${fitPillColor}`}>
+                            {business.personFitLabel}
+                          </span>
                         </div>
                         <h4 className="text-lg font-bold text-gray-900 mb-1">{business.categoryName}</h4>
                         <p className="text-sm text-gray-500 mb-3 flex-1">
-                          {business.opportunityLabel} opportunity based on local demand and competition.
+                          {business.marketExplanation || 'Fit assessed on your profile; market demand data isn\'t available for this village yet.'}
                         </p>
 
                         <div className="grid grid-cols-2 gap-y-2 gap-x-3 text-xs text-gray-600 mb-4 pt-3 border-t border-gray-100">
@@ -188,7 +201,8 @@ export default function DiscoveryPage() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

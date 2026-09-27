@@ -1,0 +1,30 @@
+[
+  {
+    "state": "MAHARASHTRA",
+    "category_name": "Dairy",
+    "monthly_household_spend": null,
+    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO: transcribe from Final_Report_HCES_2023-24L.pdf",
+    "survey_year": 2024
+  },
+  {
+    "state": "MAHARASHTRA",
+    "category_name": "Tailoring",
+    "monthly_household_spend": null,
+    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO",
+    "survey_year": 2024
+  },
+  {
+    "state": "MAHARASHTRA",
+    "category_name": "Retail / Kirana Store",
+    "monthly_household_spend": null,
+    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO",
+    "survey_year": 2024
+  },
+  {
+    "state": "MAHARASHTRA",
+    "category_name": "Flour Mill",
+    "monthly_household_spend": null,
+    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO",
+    "survey_year": 2024
+  }
+]

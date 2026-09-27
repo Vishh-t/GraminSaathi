@@ -36,6 +36,11 @@ import java.util.stream.Stream;
  *   <li>{@code graminsaathi.villages.coordinates-as-of} (default: today): the "as of" date recorded for
  *       every row the coordinates backfill touches in that run - one value per run, like the population
  *       pass's target year, not a per-row CSV column.</li>
+ *   <li>{@code graminsaathi.villages.market-signals-backfill-path} (default empty): path to a CSV or
+ *       directory of them, produced by {@code compute_village_market_signals.py} (step 2b/2c-partial).
+ *       Fills {@code village_features.competitor_counts_json}/etc. and {@code osm_building_count} on
+ *       existing rows. No matching "-as-of" property - that CSV stamps its own as-of date per row (see
+ *       {@code MarketSignalsCsvParser}), unlike the coordinates backfill.</li>
  * </ul>
  *
  * <p>{@code @Order(1)} - runs alongside {@link VillageDataInitializer}; both only touch rows that already
@@ -59,6 +64,9 @@ public class VillageEnrichmentInitializer implements ApplicationRunner {
     @Value("${graminsaathi.villages.coordinates-as-of:}")
     private String coordinatesAsOf;
 
+    @Value("${graminsaathi.villages.market-signals-backfill-path:}")
+    private String marketSignalsBackfillPath;
+
     @Override
     public void run(ApplicationArguments args) {
         if (pc11BackfillPath != null && !pc11BackfillPath.isBlank()) {
@@ -68,6 +76,9 @@ public class VillageEnrichmentInitializer implements ApplicationRunner {
             LocalDate asOf = (coordinatesAsOf == null || coordinatesAsOf.isBlank())
                     ? LocalDate.now() : LocalDate.parse(coordinatesAsOf.trim());
             runOverFiles(coordinatesBackfillPath, path -> backfillCoordinatesFile(path, asOf));
+        }
+        if (marketSignalsBackfillPath != null && !marketSignalsBackfillPath.isBlank()) {
+            runOverFiles(marketSignalsBackfillPath, this::backfillMarketSignalsFile);
         }
     }
 
@@ -103,6 +114,12 @@ public class VillageEnrichmentInitializer implements ApplicationRunner {
     private void backfillCoordinatesFile(Path path, LocalDate asOf) {
         withReader(path, reader -> villageEnrichmentService.backfillCoordinates(reader, asOf),
                 (s) -> "coordinates " + path + " as of " + asOf + " (matched=" + s.matched()
+                        + ", unmatched=" + s.unmatched() + ", skippedInvalid=" + s.skippedInvalid() + ")");
+    }
+
+    private void backfillMarketSignalsFile(Path path) {
+        withReader(path, reader -> villageEnrichmentService.backfillMarketSignals(reader),
+                (s) -> "market signals " + path + " (matched=" + s.matched()
                         + ", unmatched=" + s.unmatched() + ", skippedInvalid=" + s.skippedInvalid() + ")");
     }
 

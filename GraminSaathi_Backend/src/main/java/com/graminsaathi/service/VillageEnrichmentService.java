@@ -1,5 +1,6 @@
 package com.graminsaathi.service;
 
+import com.graminsaathi.data.MarketSignalsCsvParser;
 import com.graminsaathi.data.VillageCsvParser;
 import com.graminsaathi.repository.VillageRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,40 @@ public class VillageEnrichmentService {
             UPDATE villages
             SET latitude = ?, longitude = ?, coordinates_source = ?, coordinates_as_of = ?
             WHERE id = ?
+            """;
+
+    /**
+     * Upsert of the competitor-counts (2b) and coverage-confidence (2c) column groups only on
+     * {@code village_features} - same ON CONFLICT shape as {@link VillageFeaturesService}'s population
+     * upsert, so this never disturbs the population or amenities groups on a row that already exists.
+     *
+     * <p>{@code compute_village_market_signals.py} and {@code compute_coverage_confidence.py} are two
+     * SEPARATE Python passes, run at different times, whose CSVs carry different, non-overlapping subsets
+     * of these columns (the first has competitor counts + osm_building_count; the second has
+     * expected_building_count/ratio/label, computed FROM the first pass's osm_building_count but written
+     * to a different file). Every SET clause below is therefore {@code COALESCE(EXCLUDED.x, village_features.x)}
+     * rather than a bare {@code EXCLUDED.x} - a column absent from whichever CSV is being backfilled right
+     * now (parsed as null by {@link com.graminsaathi.data.MarketSignalsCsvParser}) falls back to whatever
+     * the row already has, instead of overwriting an earlier pass's value with null. This also means running
+     * either script's output twice, in either order, is safe and idempotent - never a data-loss risk.
+     */
+    private static final String UPSERT_MARKET_SIGNALS_SQL = """
+            INSERT INTO village_features (
+                village_id, competitor_counts_json, competitor_counts_source, competitor_counts_as_of,
+                osm_building_count, expected_building_count, coverage_confidence_ratio, coverage_confidence_label,
+                coverage_confidence_source, coverage_confidence_as_of, features_updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (village_id) DO UPDATE SET
+                competitor_counts_json     = COALESCE(EXCLUDED.competitor_counts_json, village_features.competitor_counts_json),
+                competitor_counts_source   = COALESCE(EXCLUDED.competitor_counts_source, village_features.competitor_counts_source),
+                competitor_counts_as_of    = COALESCE(EXCLUDED.competitor_counts_as_of, village_features.competitor_counts_as_of),
+                osm_building_count         = COALESCE(EXCLUDED.osm_building_count, village_features.osm_building_count),
+                expected_building_count    = COALESCE(EXCLUDED.expected_building_count, village_features.expected_building_count),
+                coverage_confidence_ratio  = COALESCE(EXCLUDED.coverage_confidence_ratio, village_features.coverage_confidence_ratio),
+                coverage_confidence_label  = COALESCE(EXCLUDED.coverage_confidence_label, village_features.coverage_confidence_label),
+                coverage_confidence_source = COALESCE(EXCLUDED.coverage_confidence_source, village_features.coverage_confidence_source),
+                coverage_confidence_as_of  = COALESCE(EXCLUDED.coverage_confidence_as_of, village_features.coverage_confidence_as_of),
+                features_updated_at        = EXCLUDED.features_updated_at
             """;
 
     private final VillageRepository villageRepository;
@@ -148,6 +183,55 @@ public class VillageEnrichmentService {
         }
 
         log.info("Village enrichment (coordinates): backfill complete - matched={}, unmatched={}, skippedInvalid={}",
+                matched[0], unmatched[0], skippedInvalid);
+        return new BackfillSummary(matched[0], unmatched[0], skippedInvalid);
+    }
+
+    /**
+     * Backfills the competitor-counts (2b) and osm-building-count (2c-partial) column groups onto
+     * {@code village_features} from {@code compute_village_market_signals.py}'s output. Matched by
+     * {@code lgd_code} only (that script's output always carries one, since it's itself downstream of
+     * {@code resolve_osm_places.py}'s coordinates match, which requires lgd_code to have succeeded) -
+     * no lgd-then-name fallback here, unlike {@link #backfillCoordinates}, since a row with no lgd_code
+     * is unusable as a join key regardless.
+     *
+     * <p>Writes straight to {@code village_features}, not {@code villages} - this is a {@code village_id}
+     * upsert (see {@link VillageFeaturesService#upsert}), not a {@code villages} row UPDATE, since
+     * competitor counts/building counts are scoring inputs that live on the features table by design.
+     */
+    public BackfillSummary backfillMarketSignals(Reader reader) throws IOException {
+        Map<String, Long> idByLgdCode = loadIdByLgdCode();
+        log.info("Village enrichment (market signals): loaded {} lgd-code keys for matching", idByLgdCode.size());
+
+        List<Object[]> batch = new ArrayList<>(BATCH);
+        int[] matched = {0};
+        int[] unmatched = {0};
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+        int skippedInvalid = MarketSignalsCsvParser.parse(reader, r -> {
+            Long id = idByLgdCode.get(r.lgdCode());
+            if (id == null) {
+                unmatched[0]++;
+                return;
+            }
+            matched[0]++;
+            batch.add(new Object[]{
+                    id, r.competitorCountsJson(), r.competitorCountsSource(),
+                    r.competitorCountsAsOf() != null ? Date.valueOf(r.competitorCountsAsOf()) : null,
+                    r.osmBuildingCount(), r.expectedBuildingCount(), r.coverageConfidenceRatio(), r.coverageConfidenceLabel(),
+                    r.coverageConfidenceSource(),
+                    r.coverageConfidenceAsOf() != null ? Date.valueOf(r.coverageConfidenceAsOf()) : null,
+                    java.sql.Timestamp.valueOf(now)
+            });
+            if (batch.size() >= BATCH) {
+                flush(UPSERT_MARKET_SIGNALS_SQL, batch);
+            }
+        });
+        if (!batch.isEmpty()) {
+            flush(UPSERT_MARKET_SIGNALS_SQL, batch);
+        }
+
+        log.info("Village enrichment (market signals): backfill complete - matched={}, unmatched={}, skippedInvalid={}",
                 matched[0], unmatched[0], skippedInvalid);
         return new BackfillSummary(matched[0], unmatched[0], skippedInvalid);
     }

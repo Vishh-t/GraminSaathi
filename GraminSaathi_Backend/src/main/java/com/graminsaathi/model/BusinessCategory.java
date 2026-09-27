@@ -118,7 +118,7 @@ public class BusinessCategory {
     private String fitRequirementRulesJson;
 
     /**
-     * Declares a future amenity dependency; NOT read by anything yet (see class javadoc). Recorded now so
+     * Declares a future amenity dependency; NOT read by anything yet (see class Javadoc). Recorded now so
      * the category data doesn't need a second editing pass once {@code village_features} gains an
      * amenities column group.
      */
