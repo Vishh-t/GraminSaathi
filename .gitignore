@@ -24,3 +24,6 @@ sih_frontend/*.local
 sih_frontend/.env
 sih_frontend/.env.local
 sih_frontend/*.log
+
+# === Data processing scratch (raw datasets, generated CSVs, xlsx exports, rasters) ===
+Population Data Csv/
