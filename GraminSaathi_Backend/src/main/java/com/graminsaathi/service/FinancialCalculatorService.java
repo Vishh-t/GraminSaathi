@@ -7,6 +7,8 @@ import com.graminsaathi.dto.request.AnalyzeRequest;
 import com.graminsaathi.dto.request.ApplicantProfile;
 import com.graminsaathi.dto.response.SchemeComparisonResponse;
 import com.graminsaathi.model.Scheme;
+import com.graminsaathi.model.Village;
+import com.graminsaathi.repository.VillageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ public class FinancialCalculatorService {
 
     private final DemoDataLoader demoDataLoader;
     private final FinancingSchemeService financingSchemeService;
+    private final VillageRepository villageRepository;
 
     /** A real scheme with its repayment terms worked out for a specific loan amount. */
     private record FinancingOption(
@@ -79,14 +82,19 @@ public class FinancialCalculatorService {
         double projectCost = availableMarginCapital / 0.10;
         double loanAmount = projectCost * 0.90;
 
-        DemoData.VillageData village = demoDataLoader.getVillage(request.getVillageName());
-        ApplicantProfile applicant = financingSchemeService.resolveApplicant(village, category, request.getApplicant());
+        // Real village's state (not the demo lookup, which returns null for any village outside the ~4-
+        // village demo set and silently drops every state-specific financing scheme as a result - see
+        // Project_Docs/RECOMMENDATION_ENGINE_BUILD_LOG.md, "part 7").
+        String villageState = villageRepository.findFirstByNameNormalized(VillageService.normalize(request.getVillageName()))
+                .map(Village::getState)
+                .orElse(null);
+        ApplicantProfile applicant = financingSchemeService.resolveApplicant(villageState, category, request.getApplicant());
 
         // Same figure DscrService uses, so "affordable" here means the DSCR label will not be "Risky".
         double monthlyNetOperatingIncome = category.getReferenceMonthlyRevenue() - category.getReferenceMonthlyOperatingCost();
         List<FinancingOption> financingOptions = rankFinancingOptions(loanAmount, applicant, monthlyNetOperatingIncome);
         if (financingOptions.isEmpty()) {
-            String location = village != null && village.getState() != null ? village.getState() : "this location";
+            String location = villageState != null ? villageState : "this location";
             throw new IllegalArgumentException(String.format(
                     "No government financing scheme covers a loan of Rs. %.0f in %s.", loanAmount, location));
         }

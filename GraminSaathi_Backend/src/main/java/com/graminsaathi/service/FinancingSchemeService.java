@@ -40,9 +40,19 @@ public class FinancingSchemeService {
      * a new (greenfield) business, and the business category's sector.
      */
     public ApplicantProfile baselineProfile(DemoData.VillageData village, DemoData.BusinessCategoryData category) {
+        return baselineProfile(village != null ? village.getState() : null, category);
+    }
+
+    /**
+     * Same as {@link #baselineProfile(DemoData.VillageData, DemoData.BusinessCategoryData)} but for a
+     * caller that already has a real {@code Village} entity (not the demo-data shape) - added 2026-09-27
+     * so {@link FinancialCalculatorService} can pass the real village's state without needing a
+     * DemoDataLoader lookup, which returns null for any village outside the ~4-village demo set.
+     */
+    public ApplicantProfile baselineProfile(String villageState, DemoData.BusinessCategoryData category) {
         return ApplicantProfile.builder()
                 .age(BASELINE_AGE)
-                .state(village != null ? village.getState() : null)
+                .state(villageState)
                 .ruralUrban("rural")
                 .businessStage("greenfield")
                 .sector(category != null ? category.getSector() : null)
@@ -59,7 +69,14 @@ public class FinancingSchemeService {
     public ApplicantProfile resolveApplicant(DemoData.VillageData village,
                                              DemoData.BusinessCategoryData category,
                                              ApplicantProfile provided) {
-        ApplicantProfile baseline = baselineProfile(village, category);
+        return resolveApplicant(village != null ? village.getState() : null, category, provided);
+    }
+
+    /** Same as {@link #resolveApplicant(DemoData.VillageData, DemoData.BusinessCategoryData, ApplicantProfile)} but for a real village's state string - see {@link #baselineProfile(String, DemoData.BusinessCategoryData)}. */
+    public ApplicantProfile resolveApplicant(String villageState,
+                                             DemoData.BusinessCategoryData category,
+                                             ApplicantProfile provided) {
+        ApplicantProfile baseline = baselineProfile(villageState, category);
         if (provided == null) {
             return baseline;
         }

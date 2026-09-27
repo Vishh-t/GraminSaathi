@@ -13,13 +13,17 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+// `village` is the real VillageSearchResponse shape (name/district/state/population2011/households2011),
+// not the old demo VillageResponse (villageName/population5kmRadius) - see MapPage.jsx for context.
 const VillageMarker = ({ position, village }) => (
   <Marker position={position} icon={L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] })}>
     <Popup>
       <div className="p-1">
-        <p className="font-bold">{village.villageName}</p>
-        <p className="text-sm text-gray-600">{village.block}, {village.district}, {village.state}</p>
-        <p className="text-sm text-gray-600">Population: {formatNumber(village.population5kmRadius)}</p>
+        <p className="font-bold">{village.name}</p>
+        <p className="text-sm text-gray-600">{village.block ? `${village.block}, ` : ''}{village.district}, {village.state}</p>
+        {village.population2011 != null && (
+          <p className="text-sm text-gray-600">Population (Census 2011): {formatNumber(village.population2011)}</p>
+        )}
       </div>
     </Popup>
   </Marker>
@@ -82,7 +86,10 @@ export default function BusinessMap({ village, competitorCount, className = '' }
   const mapRef = useRef(null);
 
   const center = [village.latitude, village.longitude];
-  const competitorPositions = generateCompetitorPositions(center, competitorCount, village.villageName.length * 1000);
+  // competitorCount is null for a real village (no per-category competitor-location API yet - see
+  // MapPage.jsx) - generateCompetitorPositions(..., null, ...) already yields an empty array (`i < null`
+  // compares as `i < 0`), so this stays a no-op scatter rather than fake pins.
+  const competitorPositions = generateCompetitorPositions(center, competitorCount ?? 0, village.name.length * 1000);
 
   if (tileError) {
     return (

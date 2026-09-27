@@ -7,6 +7,7 @@ import { useAnalysisContext } from '../context/AnalysisContext';
 import { useToast } from '../hooks/useToast';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
+import VillageAutocomplete from '../components/VillageAutocomplete';
 import OpportunityScoreCard from '../components/OpportunityScoreCard';
 import LoanComparisonCard from '../components/LoanComparisonCard';
 import DSCRIndicator from '../components/DSCRIndicator';
@@ -52,7 +53,6 @@ export default function AnalysisPage() {
   // Reference data + a small inline form so this page can be a real starting
   // point on its own, not just a screen that only ever renders when Discovery
   // (or Map/Dashboard) has already handed it a fully-formed deep link.
-  const [villages, setVillages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [refLoading, setRefLoading] = useState(true);
   const [formVillage, setFormVillage] = useState(village || ctxVillage || '');
@@ -96,13 +96,8 @@ export default function AnalysisPage() {
   const loadReferenceData = async () => {
     setRefLoading(true);
     try {
-      const [vRes, cRes] = await Promise.all([
-        referenceAPI.getVillages(),
-        referenceAPI.getBusinessCategories(),
-      ]);
-      setVillages(vRes.data);
+      const cRes = await referenceAPI.getBusinessCategories();
       setCategories(cRes.data);
-      setFormVillage(prev => prev || village || ctxVillage || vRes.data[0]?.villageName || '');
       setFormCategory(prev => prev || category || ctxCategory || cRes.data[0]?.categoryName || '');
     } catch (err) {
       console.error('Failed to load reference data:', err);
@@ -221,12 +216,10 @@ export default function AnalysisPage() {
                 <MapPin className="w-3.5 h-3.5 text-primary-600" />
                 {t('discovery.villageLabel')}
               </label>
-              <Select
+              <VillageAutocomplete
                 value={formVillage}
-                onChange={setFormVillage}
-                disabled={refLoading}
-                placeholder="Select a village"
-                options={villages.map(v => ({ value: v.villageName, label: v.villageName }))}
+                onChange={(name) => setFormVillage(name)}
+                placeholder="Search for a village..."
               />
             </div>
 

@@ -1,30 +1,226 @@
 [
   {
+    "state": "ANDHRA PRADESH",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1433.92,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.362.1/mo x household size 3.96 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "ARUNACHAL PRADESH",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1089.7,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.204.6/mo x household size 5.326 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "ASSAM",
+    "category_name": "Dairy",
+    "monthly_household_spend": 850.19,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.171.93/mo x household size 4.945 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "BIHAR",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1825.32,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.333.33/mo x household size 5.476 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "CHHATTISGARH",
+    "category_name": "Dairy",
+    "monthly_household_spend": 414.34,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.92.24/mo x household size 4.492 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "NCT OF DELHI",
+    "category_name": "Dairy",
+    "monthly_household_spend": 4258.4,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.808.66/mo x household size 5.266 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "GOA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 2008.81,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.466.84/mo x household size 4.303 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "GUJARAT",
+    "category_name": "Dairy",
+    "monthly_household_spend": 2528.27,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.493.61/mo x household size 5.122 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "HARYANA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 6021.13,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.1110.09/mo x household size 5.424 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "HIMACHAL PRADESH",
+    "category_name": "Dairy",
+    "monthly_household_spend": 3022.57,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.642.28/mo x household size 4.706 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "JHARKHAND",
+    "category_name": "Dairy",
+    "monthly_household_spend": 851.23,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.160.67/mo x household size 5.298 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "KARNATAKA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1267.01,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.268.72/mo x household size 4.715 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "KERALA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1089.63,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.258.82/mo x household size 4.21 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "MADHYA PRADESH",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1587.53,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.334.71/mo x household size 4.743 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
     "state": "MAHARASHTRA",
     "category_name": "Dairy",
-    "monthly_household_spend": null,
-    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO: transcribe from Final_Report_HCES_2023-24L.pdf",
+    "monthly_household_spend": 1212.43,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.260.29/mo x household size 4.658 (Census 2011 pop/households, this state's own village master file)",
     "survey_year": 2024
   },
   {
-    "state": "MAHARASHTRA",
-    "category_name": "Tailoring",
-    "monthly_household_spend": null,
-    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO",
+    "state": "MANIPUR",
+    "category_name": "Dairy",
+    "monthly_household_spend": 739.93,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.141.1/mo x household size 5.244 (Census 2011 pop/households, this state's own village master file)",
     "survey_year": 2024
   },
   {
-    "state": "MAHARASHTRA",
-    "category_name": "Retail / Kirana Store",
-    "monthly_household_spend": null,
-    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO",
+    "state": "MEGHALAYA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 702.77,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.127.59/mo x household size 5.508 (Census 2011 pop/households, this state's own village master file)",
     "survey_year": 2024
   },
   {
-    "state": "MAHARASHTRA",
-    "category_name": "Flour Mill",
-    "monthly_household_spend": null,
-    "source": "MoSPI HCES 2023-24, rural, Maharashtra -- TODO",
+    "state": "MIZORAM",
+    "category_name": "Dairy",
+    "monthly_household_spend": 964.65,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.194.25/mo x household size 4.966 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "NAGALAND",
+    "category_name": "Dairy",
+    "monthly_household_spend": 870.3,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.171.59/mo x household size 5.072 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "ODISHA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 438.53,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.101.44/mo x household size 4.323 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "PUNJAB",
+    "category_name": "Dairy",
+    "monthly_household_spend": 4213.35,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.815.75/mo x household size 5.165 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "RAJASTHAN",
+    "category_name": "Dairy",
+    "monthly_household_spend": 3694.07,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.681.06/mo x household size 5.424 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "SIKKIM",
+    "category_name": "Dairy",
+    "monthly_household_spend": 3514.89,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.717.47/mo x household size 4.899 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "TAMIL NADU",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1112.44,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.284.73/mo x household size 3.907 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "TRIPURA",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1179.72,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.268.18/mo x household size 4.399 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "UTTAR PRADESH",
+    "category_name": "Dairy",
+    "monthly_household_spend": 2329.24,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.385.19/mo x household size 6.047 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "UTTARAKHAND",
+    "category_name": "Dairy",
+    "monthly_household_spend": 2301.26,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.466.03/mo x household size 4.938 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "WEST BENGAL",
+    "category_name": "Dairy",
+    "monthly_household_spend": 621.01,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.137.94/mo x household size 4.502 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "ANDAMAN & NICOBAR ISLANDS",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1205.74,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.297.64/mo x household size 4.051 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "JAMMU & KASHMIR",
+    "category_name": "Dairy",
+    "monthly_household_spend": 3384.83,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.577.32/mo x household size 5.863 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "PUDUCHERRY",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1593.69,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.383.19/mo x household size 4.159 (Census 2011 pop/households, this state's own village master file)",
+    "survey_year": 2024
+  },
+  {
+    "state": "DAMAN & DIU",
+    "category_name": "Dairy",
+    "monthly_household_spend": 1159.4,
+    "source": "MoSPI HCES 2023-24 rural Statement 3R per-capita Rs.244.65/mo x household size 4.739 (Census 2011 pop/households, this state's own village master file)",
     "survey_year": 2024
   }
 ]

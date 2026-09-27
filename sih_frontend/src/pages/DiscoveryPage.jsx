@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { referenceAPI, analysisAPI } from '../services/api';
+import { analysisAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import { useAnalysisContext } from '../context/AnalysisContext';
 import TopNav from '../components/TopNav';
-import Select from '../components/Select';
+import VillageAutocomplete from '../components/VillageAutocomplete';
 import { formatCurrency } from '../utils/format';
 import { getErrorMessage } from '../utils/errors';
 import { Loader2, TrendingUp, ArrowRight, Target, Store } from 'lucide-react';
@@ -14,7 +14,6 @@ export default function DiscoveryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { village: ctxVillage, capital: ctxCapital, updateContext } = useAnalysisContext();
-  const [villages, setVillages] = useState([]);
   const [selectedVillage, setSelectedVillage] = useState('');
   const [capital, setCapital] = useState('');
   const [results, setResults] = useState([]);
@@ -22,25 +21,12 @@ export default function DiscoveryPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadVillages();
     // URL params win (a real deep link); otherwise fall back to whatever was
     // last used elsewhere in the app.
     setSelectedVillage(searchParams.get('village') || ctxVillage || '');
     setCapital(searchParams.get('capital') || ctxCapital || '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const loadVillages = async () => {
-    try {
-      const res = await referenceAPI.getVillages();
-      setVillages(res.data);
-      if (res.data.length > 0 && !selectedVillage) {
-        setSelectedVillage(res.data[0].villageName);
-      }
-    } catch (err) {
-      console.error('Failed to load villages:', err);
-    }
-  };
 
   const handleDiscover = async () => {
     if (!selectedVillage || !capital) return;
@@ -83,16 +69,11 @@ export default function DiscoveryPage() {
 
             <div className="mb-5">
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('discovery.villageLabel')}</label>
-              <Select
+              <VillageAutocomplete
                 value={selectedVillage}
-                onChange={setSelectedVillage}
+                onChange={(name) => setSelectedVillage(name)}
                 disabled={loading}
-                placeholder="Select a village"
-                options={villages.map(v => ({
-                  value: v.villageName,
-                  label: v.villageName,
-                  sublabel: `· ${v.block}, ${v.district}`,
-                }))}
+                placeholder="Search for a village..."
               />
             </div>
 

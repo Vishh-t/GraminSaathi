@@ -40,6 +40,14 @@ export const referenceAPI = {
   getSchemes: () => api.get('/schemes'),
 };
 
+// Real ~633k-village Census/LGD search table (VillageController), as opposed to referenceAPI.getVillages()
+// above, which only ever returns the ~4 hardcoded demo villages. See
+// GraminSaathi_Backend/Project_Docs/RECOMMENDATION_ENGINE_BUILD_LOG.md ("part 7") for context.
+export const villageAPI = {
+  // q must be 2+ chars (server-side minimum) - the caller should debounce and skip shorter queries.
+  search: (q, state, limit) => api.get('/villages/search', { params: { q, state, limit } }),
+};
+
 export const schemesAPI = {
   // body: { applicant, level, sector, state, calculationType, actualCost, loanAmount } - all optional.
   match: (data) => api.post('/schemes/match', data),

@@ -9,6 +9,8 @@ import com.graminsaathi.dto.request.AnalyzeRequest;
 import com.graminsaathi.dto.request.ApplicantProfile;
 import com.graminsaathi.dto.response.SchemeComparisonResponse;
 import com.graminsaathi.model.Scheme;
+import com.graminsaathi.model.Village;
+import com.graminsaathi.repository.VillageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +22,7 @@ import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,12 +42,19 @@ class FinancialCalculatorServiceTest {
 
     @Mock
     private FinancingSchemeService financingSchemeService;
+    @Mock
+    private VillageRepository villageRepository;
 
     private FinancialCalculatorService financialCalculatorService;
 
     @BeforeEach
     void setUp() {
-        financialCalculatorService = new FinancialCalculatorService(demoDataLoader, financingSchemeService);
+        // Rewritten 2026-09-27 (see Project_Docs/RECOMMENDATION_ENGINE_BUILD_LOG.md, "part 7") - the real
+        // service now resolves the village's state via VillageRepository, not demoDataLoader.getVillage().
+        // villageRepository.findFirstByNameNormalized(...) defaults to Optional.empty() when unstubbed
+        // (Mockito's built-in default answer for Optional-returning methods), matching the old
+        // demoDataLoader.getVillage(...) == null default - so most tests below need no village stub at all.
+        financialCalculatorService = new FinancialCalculatorService(demoDataLoader, financingSchemeService, villageRepository);
     }
 
     // ---- scheme terms -> analysis result ----
@@ -124,14 +134,14 @@ class FinancialCalculatorServiceTest {
     @Test
     void testResolvedApplicantAndLoanAmountPassedToSchemeLookup() {
         stubDairy();
-        DemoData.VillageData village = stubVillage("Maharashtra");
+        stubVillage("Maharashtra");
         DemoData.BusinessCategoryData category = demoDataLoader.getBusinessCategory("Dairy");
 
         // The client-supplied applicant details go to resolveApplicant, and only the applicant it returns
         // is used for the lookup. Candidates are only stubbed for that exact object, so any mix-up fails.
         ApplicantProfile provided = ApplicantProfile.builder().isSc(true).build();
         ApplicantProfile resolved = ApplicantProfile.builder().state("Maharashtra").isSc(true).build();
-        when(financingSchemeService.resolveApplicant(village, category, provided)).thenReturn(resolved);
+        when(financingSchemeService.resolveApplicant("Maharashtra", category, provided)).thenReturn(resolved);
         when(financingSchemeService.findFinancingCandidates(anyDouble(), same(resolved)))
                 .thenReturn(List.of(createScheme("s-1", "Wired Scheme", 6, 3, 0)));
 
@@ -148,11 +158,11 @@ class FinancialCalculatorServiceTest {
     @Test
     void testNoApplicantDetailsResolvesFromVillageAndCategoryOnly() {
         stubDairy();
-        DemoData.VillageData village = stubVillage("Maharashtra");
+        stubVillage("Maharashtra");
         DemoData.BusinessCategoryData category = demoDataLoader.getBusinessCategory("Dairy");
 
         ApplicantProfile baseline = ApplicantProfile.builder().state("Maharashtra").build();
-        when(financingSchemeService.resolveApplicant(village, category, null)).thenReturn(baseline);
+        when(financingSchemeService.resolveApplicant("Maharashtra", category, null)).thenReturn(baseline);
         when(financingSchemeService.findFinancingCandidates(anyDouble(), same(baseline)))
                 .thenReturn(List.of(createScheme("s-1", "Baseline Scheme", 6, 3, 0)));
 
@@ -177,7 +187,9 @@ class FinancialCalculatorServiceTest {
     @Test
     void testNoSchemeCoversLoanUnknownVillage() {
         stubDairy();
-        when(demoDataLoader.getVillage("Ghoti")).thenReturn(null);
+        // Unstubbed villageRepository already defaults to Optional.empty() (see setUp() comment) - this
+        // explicit stub is kept only to make the "unknown village" intent obvious at the call site.
+        when(villageRepository.findFirstByNameNormalized(VillageService.normalize("Ghoti"))).thenReturn(Optional.empty());
         when(financingSchemeService.findFinancingCandidates(anyDouble(), any())).thenReturn(List.of());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -552,11 +564,10 @@ class FinancialCalculatorServiceTest {
         when(demoDataLoader.getBusinessData("Ghoti", "Dairy")).thenReturn(businessData);
     }
 
-    private DemoData.VillageData stubVillage(String state) {
-        DemoData.VillageData village = new DemoData.VillageData();
-        village.setVillageName("Ghoti");
-        village.setState(state);
-        when(demoDataLoader.getVillage("Ghoti")).thenReturn(village);
+    /** Stubs villageRepository so the real service resolves "Ghoti" to the given state. */
+    private Village stubVillage(String state) {
+        Village village = Village.builder().name("Ghoti").state(state).build();
+        when(villageRepository.findFirstByNameNormalized(VillageService.normalize("Ghoti"))).thenReturn(Optional.of(village));
         return village;
     }
 

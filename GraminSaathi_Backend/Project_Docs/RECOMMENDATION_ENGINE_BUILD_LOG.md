@@ -877,6 +877,58 @@ look correct on disk. This closes out the log's single most repeated caveat.
 2. Once Dairy has a verified real `marketScore` end-to-end (data seeded + a live `/discover` or equivalent
    call showing a non-`LOW_PARTIAL_DATA` result), revisit the business-category-expansion decision.
 
+## Session 2026-09-27 (part 6) — Dairy HCES transcription DONE for all 32 states/UTs with real village data;
+per-capita→household conversion decided and applied; ANDHRA PRADESH/TELANGANA data-boundary gap found
+
+**`hce_category_spend_seed.json` fully seeded for Dairy — no more nulls for this category.** Pulled rural
+Statement 3R ("milk and milk products") per-capita MPCE for every state/UT from
+`Final_Report_HCES_2023-24L.pdf`, restricted to the 32 state values that actually exist in the imported
+village data (confirmed by re-deriving them straight from `data/output/village_master_*.csv`, not assumed)
+— seeding a row for a state with zero villages in the DB would never be looked up, so skipped intentionally
+(not an oversight): Chandigarh, Ladakh, Lakshadweep, and the merged "Dadra & Nagar Haveli and Daman & Diu"
+UT have no village master file and were left out (the pre-merger "Daman & Diu" file/HCES row was kept and
+seeded on its own, since it does have village data under that exact state label).
+
+**Per-capita→household-spend conversion, decided and applied (was an open question as of part 4/5):**
+HCES only publishes per-capita MPCE, but `DemandSupplyScoreService` multiplies `monthlyHouseholdSpend`
+directly by `householdsProjected` — seeding raw per-capita numbers into that field would have silently
+undercounted demand by roughly the average household size in every state (a wrong-but-authoritative-looking
+number, exactly what {@link HceCategorySpend}'s own Javadoc warns against). Fixed by computing a **real,
+state-specific household-size ratio** (`sum(population_2011)/sum(households_2011)`, aggregated across every
+village in that state's own `village_master_*.csv`) and multiplying it into the per-capita figure before
+writing `monthly_household_spend`. No new data source needed — this is exactly the Census columns step 2a
+already loaded. Ratios ranged 3.91 (Tamil Nadu) to 6.05 (Uttar Pradesh); national weighted average came out
+4.945, reassuringly close to the 4.9 already used elsewhere in this pipeline for coverage-confidence
+expected-building-counts — cross-validates both figures. `source` field on every row documents the exact
+per-capita value and household-size multiplier used, so the conversion is auditable, not a black box.
+
+**Real data-boundary gap found (separate from the `lgd_code` bug, not yet fixed, needs a decision):**
+`village_master_andhra_pradesh.csv` is the **pre-2014 undivided Andhra Pradesh** — confirmed by inspecting
+its districts directly: Adilabad, Karimnagar, Khammam, Mahbubnagar, Medak, Nalgonda, Nizamabad, Rangareddy,
+Warangal are all in modern Telangana. This means **every village currently in Telangana has
+`Village.state = "ANDHRA PRADESH"` in this DB** — there is no `"TELANGANA"` value anywhere in the imported
+data. Consequence: the Dairy row seeded under `"ANDHRA PRADESH"` uses the *modern, post-split* AP HCES
+figure (Rs.362.10/capita, the only "Andhra Pradesh" MoSPI publishes), which will now also apply to every
+Telangana-district village in the DB, even though Telangana has its own distinct MoSPI figure
+(Rs.301.82/capita) that nothing currently uses. Not fixed this session — fixing it properly means either
+re-importing AP/Telangana as two states split by district (a village-import change, out of scope for a
+seed-data pass) or accepting the current AP figure as an approximation for both. Flagging so it isn't
+re-discovered from scratch: this is a village-import boundary issue, not an HCES transcription error.
+
+**NEXT STEPS, updated (2026-09-27, supersedes the list above):**
+1. Tailoring / Retail-Kirana / Flour-Mill: decide the HCES proxy methodology (none of the three has a
+   clean single Statement-3R line — unlike Dairy, which mapped 1:1 to "milk and milk products") for the
+   remaining `hce_category_spend_seed.json` rows (currently still null, will keep being skipped by the
+   loader).
+2. Recompile + `mvnw.cmd test` again after this session's seed-file change (data-only change, but the
+   loader itself wasn't touched this session either — cheap to re-verify).
+3. Boot the app and hit `/api/discover` (or whichever endpoint calls `DemandSupplyScoreService`) for a
+   Dairy-category village in a seeded state — first real, non-placeholder `marketScore` this project has
+   ever produced. Confirm `Confidence.MEDIUM_FULL_DATA`, not `LOW_PARTIAL_DATA`.
+4. Decide on the ANDHRA PRADESH/TELANGANA boundary gap above — live with the AP approximation for the demo,
+   or scope a proper village re-import/split.
+5. Once Dairy is fully verified end-to-end, revisit the business-category-expansion decision.
+
 ## Step 2b-extended — real competitor locations for the map — SCOPED THIS SESSION, NOT STARTED
 
 **Problem found this session:** `MapPage.jsx`/`BusinessMap.jsx` (the village map with village + competitor
@@ -924,3 +976,128 @@ proven (step 2b is live in production data, confirmed via the part-4 spot-check 
 polish, but the map is already fully non-functional against real data today (wrong villages, fake pins), so
 it isn't a regression to leave as-is — weigh against the still-open HCES seeding task above when deciding
 what to pick up next.
+
+## Session 2026-09-27 (part 7) — real villages were never reachable from the frontend at all; "Ghoti" market-score investigation surfaced a second, unrelated duplicate-village bug; both being fixed this session
+
+**Started from a support question** ("why is Dairy's marketScore null for Ghoti") that led to two separate
+findings before any code was touched:
+
+**Finding A — duplicate village row, not yet fixed this session (flagged only).** `villages` has two rows
+named exactly "Ghoti": id=1 (`households_projected` NULL — a leftover from `VillageService.seedDemoVillages`,
+which inserts the hand-curated demo villages into the SAME `villages` table the real Census import uses,
+deduped by name+district+state — a text mismatch against the real Census row let both survive) and
+id=260953 (the real Census row, `households_projected=667`). `VillageRepository.findFirstByNameNormalized`
+has no tie-break `ORDER BY`, so it silently returns id=1 — the empty one — for every lookup of "Ghoti",
+making `DemandSupplyScoreService` (and now `FeasibilityScoreService` below) report `INSUFFICIENT_NO_POPULATION`
+for a village that actually has real data under a different id. **Not fixed this session** — needs either a
+tie-break on the query (e.g. prefer the row with a non-null `village_features.households_projected`) or a
+cleanup pass on the demo-seed duplicates generally. Flagging so it isn't rediscovered from scratch.
+
+**Finding B — the real reason "I can't see the real villages in the frontend":** `referenceAPI.getVillages()`
+(`GET /api/villages`, `ReferenceDataController`, backed by `DemoDataLoader`'s ~4 hardcoded demo villages) is
+what `DiscoveryPage.jsx`, `AnalysisPage.jsx`, and `MapPage.jsx` **all** call to populate their village picker.
+None of them have ever called `VillageController`'s real `GET /api/villages/search` (the ~633k-village
+Census/LGD table steps 1/2a/2b/2c built out) — so the real village table has been completely unreachable
+from the UI since it was built, not just on the map (which was already flagged, see the section above) but
+on every page with a village picker.
+
+**Finding C — even a correctly-picked real village would fail on the Analysis page.** `/api/analyze`
+(`AnalysisController`) runs through `FeasibilityScoreService`, which — unlike `DiscoveryService` — was never
+rewired off `DemoDataLoader`; it throws `"Village not found"` for any village not in the 4-village demo set.
+Separately, `FinancialCalculatorService.calculate()` resolves the applicant's state for scheme-eligibility
+matching via `demoDataLoader.getVillage(villageName)` too — for a real village this silently returns `null`,
+so every state-specific financing scheme gets excluded (`FinancingSchemeService.availableInState` only passes
+state-specific schemes when the applicant's state matches) and only central schemes ever show up, with no
+error to say why.
+
+**Plan for this session (both parts of Vishesh's "fix what needs fixing" ask):**
+1. **Backend:** rewrite `FeasibilityScoreService` to read `Village`/`VillageFeatures`/`BusinessCategory`
+   directly (mirrors `DemandSupplyScoreService`'s null-safe population/competitor-count pattern) instead of
+   `DemoDataLoader` — fixes "Village not found" and gives the Analysis page's Opportunity Score a real number
+   for real villages. Give `FinancingSchemeService.baselineProfile`/`resolveApplicant` a `String state`
+   overload (keeping the existing `DemoData.VillageData` overload for anything still using it) and point
+   `FinancialCalculatorService` at the real `Village.getState()` instead of the demo lookup, so state-specific
+   schemes are correctly matched for real villages.
+2. **Frontend:** new `VillageAutocomplete.jsx` component (search-as-you-type against `/api/villages/search`,
+   debounced), replacing the fixed-list `Select` fed by `referenceAPI.getVillages()` in `DiscoveryPage`,
+   `AnalysisPage`'s standalone form, and `MapPage`. `MapPage`'s info panels adjusted to the real
+   `VillageSearchResponse` shape (Census 2011 population/households, not the demo's 5km-radius figures);
+   competitor count now shown as "not available yet" for real villages rather than a fabricated per-category
+   number, since real per-village competitor breakdown by category isn't exposed via any API yet (that's the
+   already-scoped-but-not-started "Step 2b-extended" work above) — `BusinessMap.jsx`'s fake
+   `generateCompetitorPositions` scatter is skipped rather than fed a made-up count.
+
+**Deliberately NOT touched this session (time-boxed, flagging instead of rewriting under pressure):**
+- Finding A (the Ghoti duplicate-village row / demo-seed-into-real-table design) — separate bug, separate fix.
+- `EvidenceService`/`BusinessHealthScoreService`/`FinancialCalculatorService`'s other `DemoDataLoader` reads
+  (avg local price for Price Intelligence, category reference economics) — these already degrade gracefully
+  to null-safe defaults for a real village (no crash, e.g. `breakevenNote = "Not applicable"`), so left as a
+  known gap rather than rewritten alongside everything else above.
+- `/api/business-categories` (`ReferenceDataController`, still `DemoDataLoader`-backed) — left as-is since its
+  4 category names currently match the real `BusinessCategoryRepository` seed exactly (`business_categories_seed.json`
+  was carried over from the same demo file), so it's not presenting wrong data today, just the wrong source.
+
+## Session 2026-09-27 (part 8) — part 7's plan CONFIRMED fully implemented (previous session ran out of
+messages mid-task); two stale, compile-breaking test files found and fixed
+
+The previous session's transcript ended mid-edit (visibly cut off while fixing `BusinessMap.jsx`, with no
+final confirmation), so this session re-verified every file part 7 planned against what's actually on disk
+rather than trusting the plan was finished. It was — further than the cut-off transcript suggested:
+
+**Frontend — CONFIRMED DONE, all four pieces:**
+- `VillageAutocomplete.jsx` exists — debounced search-as-you-type against `GET /api/villages/search`,
+  exactly as scoped.
+- `services/api.js` — `villageAPI.search(q, state, limit)` added.
+- `MapPage.jsx`, `DiscoveryPage.jsx`, and `AnalysisPage.jsx`'s standalone form all import and use
+  `VillageAutocomplete` in place of the old `Select` fed by `referenceAPI.getVillages()`.
+- `BusinessMap.jsx` updated to the real `VillageSearchResponse` shape (`name`/`district`/`state`/
+  `population2011`) and handles a null `competitorCount` (`?? 0`) instead of crashing or fabricating pins.
+
+**Backend — CONFIRMED DONE, all three pieces:**
+- `FeasibilityScoreService` fully rewritten off `Village`/`VillageFeatures`/`BusinessCategory` (mirrors
+  `DemandSupplyScoreService`'s null-safe population/competitor-count pattern) — no longer throws
+  "Village not found" for a real Census village.
+- `FinancingSchemeService` — `String state` overloads added for both `baselineProfile` and
+  `resolveApplicant`, alongside the original `DemoData.VillageData` overloads (kept, not removed).
+- `FinancialCalculatorService` — resolves `villageState` via
+  `villageRepository.findFirstByNameNormalized(...).map(Village::getState)` instead of the demo lookup, so
+  state-specific financing schemes now correctly match for real villages. `AnalysisController` was checked
+  too — its call site and DTO mapping already match `FeasibilityScoreService`'s new signature and
+  `FeasibilityResult` shape with zero drift.
+
+**Found and fixed this session — two test files were left stale by the backend rewrite and would have
+failed `mvnw.cmd test` at the COMPILE step, not just as failing assertions:**
+- `FeasibilityScoreServiceTest.java` — still called `new FeasibilityScoreService(demoDataLoader)`, a
+  single-arg constructor that no longer exists (the real class now takes `VillageRepository`,
+  `VillageFeaturesRepository`, `BusinessCategoryRepository`, `ObjectMapper`). Rewritten to mock the four
+  real dependencies and build `Village`/`BusinessCategory`/`VillageFeatures` via their real builders
+  (patterns taken directly from the already-correct `DiscoveryServiceTest`, not guessed) — kept all five
+  original score-band assertions (high/moderate/low opportunity, competitor floor of 1, village-not-found),
+  and added one new case (`testNoFeaturesRowTreatedAsZeroPopulationAndCompetitors`) for a real village that
+  hasn't been through step 2a/2b yet, since that's now a normal, common case this service must handle
+  gracefully rather than a demo-only edge case.
+- `FinancialCalculatorServiceTest.java` — still called `new FinancialCalculatorService(demoDataLoader,
+  financingSchemeService)`, a two-arg constructor that no longer exists (needs `VillageRepository` too).
+  Fixed by adding the mock and updating only the handful of tests that explicitly stub village/state
+  (`testResolvedApplicantAndLoanAmountPassedToSchemeLookup`, `testNoApplicantDetailsResolvesFromVillageAndCategoryOnly`,
+  `testNoSchemeCoversLoanUnknownVillage`) to stub `villageRepository.findFirstByNameNormalized(...)` instead
+  of `demoDataLoader.getVillage(...)`. The other ~20 tests needed no change at all: Mockito's default answer
+  for an unstubbed method returning `Optional<T>` is `Optional.empty()` (not null), which already matches
+  the old `demoDataLoader.getVillage(...) == null` default behavior those tests were relying on.
+- `FinancingSchemeServiceTest.java` — checked, genuinely unaffected: it only calls the original
+  `DemoData.VillageData` overloads of `baselineProfile`/`resolveApplicant`, which were kept unchanged
+  alongside the new `String` overloads, not replaced.
+
+**Not fixed this session, still open (Finding A from part 7, deliberately deferred there and here too):**
+the duplicate "Ghoti" village row (`id=1`, a `VillageService.seedDemoVillages` leftover with no population
+data, vs. the real Census row at a different id) still means `findFirstByNameNormalized` can silently
+return the wrong one for any name that collides between the demo seed and the real import. This is a
+separate, pre-existing bug from the frontend/backend wiring fixed above — not reintroduced or worsened by
+anything in this session, but still unresolved. Two real fixes remain available, neither applied yet: an
+`ORDER BY` tie-break on the query (e.g. prefer the row with a non-null `village_features` population), or a
+cleanup pass removing demo-seed rows that collide by name with a real Census row.
+
+**Not run this session:** `mvnw.cmd test` itself — the two fixed test files are believed correct based on a
+full manual read against the real constructors/entities/builders (cross-checked against
+`DiscoveryServiceTest`'s already-working patterns), but this has not been confirmed by an actual test run.
+Run `mvnw.cmd test` next to verify before relying on either fixed file.

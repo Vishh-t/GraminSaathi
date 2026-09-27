@@ -1,24 +1,36 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { referenceAPI } from '../services/api';
+import { referenceAPI, villageAPI } from '../services/api';
 import { useI18n } from '../i18n/i18n';
 import { useAnalysisContext } from '../context/AnalysisContext';
 import TopNav from '../components/TopNav';
 import Select from '../components/Select';
+import VillageAutocomplete from '../components/VillageAutocomplete';
 import BusinessMap from '../components/BusinessMap';
 import { Loader2, MapPin, Building2, BarChart2, AlertTriangle, SlidersHorizontal, RotateCcw, Users } from 'lucide-react';
-import { formatNumber, formatCurrency } from '../utils/format';
+import { formatNumber } from '../utils/format';
 import { getErrorMessage } from '../utils/errors';
 
+// Rewired 2026-09-27 off the real ~633k-village Census/LGD search table (VillageController) - previously
+// this page's village picker only ever showed the ~4 hardcoded demo villages (referenceAPI.getVillages()).
+// See GraminSaathi_Backend/Project_Docs/RECOMMENDATION_ENGINE_BUILD_LOG.md ("part 7") for the full context.
+//
+// The real VillageSearchResponse shape (id, name, block, district, state, latitude, longitude,
+// population2011, households2011, source) is different from the old demo VillageResponse shape
+// (population5kmRadius, households5kmRadius, businessData with a per-category competitor count/avg
+// price) - the info panels below show what the real endpoint actually has (Census 2011 figures) rather
+// than pretending the 5km-radius/competitor numbers still exist. Real per-village, per-category
+// competitor locations aren't exposed by any API yet (scoped as "Step 2b-extended" in the build log,
+// not started) - the competitor panel and map say so honestly instead of showing a fabricated count.
 export default function MapPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { village: ctxVillage, category: ctxCategory, capital: ctxCapital, updateContext } = useAnalysisContext();
 
-  const [villages, setVillages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedVillage, setSelectedVillage] = useState(searchParams.get('village') || ctxVillage || '');
+  const [selectedVillageData, setSelectedVillageData] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || ctxCategory || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,21 +44,18 @@ export default function MapPage() {
     setLoading(true);
     setError(null);
     try {
-      const [vRes, cRes] = await Promise.all([
-        referenceAPI.getVillages(),
-        referenceAPI.getBusinessCategories(),
-      ]);
-      setVillages(vRes.data);
+      const cRes = await referenceAPI.getBusinessCategories();
       setCategories(cRes.data);
 
-      // Default to whatever came in via the URL (e.g. from Discovery/Analysis),
-      // then whatever was last used anywhere in the app; otherwise just fall
-      // back to the first entry so the map always has something to show
-      // instead of dead-ending the page.
-      const initialVillage = searchParams.get('village') || ctxVillage || vRes.data[0]?.villageName || '';
       const initialCategory = searchParams.get('category') || ctxCategory || cRes.data[0]?.categoryName || '';
-      setSelectedVillage(initialVillage);
       setSelectedCategory(initialCategory);
+
+      // A deep link/context only ever carries a village NAME, not the full real-village record this
+      // page needs for its info panels - look it up by exact name against the real search table.
+      const initialVillageName = searchParams.get('village') || ctxVillage || '';
+      if (initialVillageName) {
+        await loadVillageByName(initialVillageName);
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -54,14 +63,29 @@ export default function MapPage() {
     }
   };
 
-  const handleVillageChange = (v) => {
-    setSelectedVillage(v);
-    updateContext({ village: v });
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev);
-      next.set('village', v);
-      return next;
-    });
+  const loadVillageByName = async (name) => {
+    try {
+      const res = await villageAPI.search(name, undefined, 5);
+      const exact = res.data.find(v => v.name.toLowerCase() === name.toLowerCase()) || res.data[0] || null;
+      setSelectedVillage(name);
+      setSelectedVillageData(exact);
+    } catch (err) {
+      console.error('Failed to look up village:', err);
+      setSelectedVillageData(null);
+    }
+  };
+
+  const handleVillageChange = (name, villageObj) => {
+    setSelectedVillage(name);
+    setSelectedVillageData(villageObj);
+    if (villageObj) {
+      updateContext({ village: name });
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.set('village', name);
+        return next;
+      });
+    }
   };
 
   const handleCategoryChange = (c) => {
@@ -75,13 +99,13 @@ export default function MapPage() {
   };
 
   const handleReset = () => {
-    const firstVillage = villages[0]?.villageName || '';
     const firstCategory = categories[0]?.categoryName || '';
-    setSelectedVillage(firstVillage);
+    setSelectedVillage('');
+    setSelectedVillageData(null);
     setSelectedCategory(firstCategory);
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
-      next.set('village', firstVillage);
+      next.delete('village');
       next.set('category', firstCategory);
       return next;
     });
@@ -109,8 +133,8 @@ export default function MapPage() {
     );
   }
 
-  const villageData = villages.find(v => v.villageName === selectedVillage);
-  const businessData = villageData?.businessData?.[selectedCategory] || { competitorCount: 0, avgLocalPrice: null };
+  const villageData = selectedVillageData;
+  const hasCoordinates = villageData?.latitude != null && villageData?.longitude != null;
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
@@ -148,11 +172,10 @@ export default function MapPage() {
                   <MapPin className="w-3.5 h-3.5 text-primary-600" />
                   {t('discovery.villageLabel')}
                 </label>
-                <Select
+                <VillageAutocomplete
                   value={selectedVillage}
                   onChange={handleVillageChange}
-                  placeholder="Select a village"
-                  options={villages.map(v => ({ value: v.villageName, label: v.villageName }))}
+                  placeholder="Search for a village..."
                 />
               </div>
 
@@ -175,7 +198,7 @@ export default function MapPage() {
                   <div className="rounded-lg bg-primary-50 border border-primary-100 p-3 space-y-2">
                     <div className="flex items-center gap-2 text-sm font-semibold text-primary-800">
                       <MapPin className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{villageData.villageName}, {villageData.district}</span>
+                      <span className="truncate">{villageData.name}, {villageData.district}</span>
                     </div>
                     {selectedCategory && (
                       <div className="flex items-center gap-2 text-sm text-primary-700">
@@ -183,16 +206,18 @@ export default function MapPage() {
                         <span className="truncate">{selectedCategory}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-primary-700">
-                      <Users className="w-4 h-4 shrink-0" />
-                      <span>{formatNumber(villageData.population5kmRadius)} people nearby</span>
-                    </div>
+                    {villageData.population2011 != null && (
+                      <div className="flex items-center gap-2 text-sm text-primary-700">
+                        <Users className="w-4 h-4 shrink-0" />
+                        <span>{formatNumber(villageData.population2011)} people (Census 2011)</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               <p className="text-xs text-gray-400 mt-4">
-                {villages.length} villages available · {categories.length} business types
+                Search across all Census villages · {categories.length} business types
               </p>
             </div>
           </aside>
@@ -200,23 +225,33 @@ export default function MapPage() {
           {!villageData ? (
             <div className="card text-center py-16">
               <MapPin className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">Pick a village to see it on the map.</p>
+              <p className="text-gray-500">Search for and pick a village to see it on the map.</p>
             </div>
           ) : (
             <div className="grid lg:grid-cols-4 gap-6">
               {/* Map with floating insight card */}
               <div className="lg:col-span-3 relative rounded-lg overflow-hidden border border-gray-200 shadow-sm h-[420px] sm:h-[520px]">
-                <BusinessMap
-                  village={villageData}
-                  competitorCount={businessData.competitorCount}
-                />
-
-                <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow border border-gray-200 px-3 py-2 text-xs text-gray-600 max-w-[280px] z-[1000]">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> {t('map.legend.village')}</span>
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> {t('map.legend.competitor')}</span>
+                {hasCoordinates ? (
+                  <>
+                    <BusinessMap
+                      village={villageData}
+                      competitorCount={null}
+                    />
+                    <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow border border-gray-200 px-3 py-2 text-xs text-gray-600 max-w-[280px] z-[1000]">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> {t('map.legend.village')}</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-full flex items-center justify-center bg-gray-50">
+                    <div className="text-center text-gray-500 p-4">
+                      <MapPin className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>Location data not available yet for this village</p>
+                      <p className="text-sm mt-1">Coordinates haven't been matched for every real village yet.</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Info Panel */}
@@ -236,17 +271,17 @@ export default function MapPage() {
                       <span className="font-medium">{villageData.state}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Population (5km)</span>
-                      <span className="font-medium">{formatNumber(villageData.population5kmRadius)}</span>
+                      <span className="text-gray-500">Population (Census 2011)</span>
+                      <span className="font-medium">{villageData.population2011 != null ? formatNumber(villageData.population2011) : 'Not available'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Households (5km)</span>
-                      <span className="font-medium">{formatNumber(villageData.households5kmRadius)}</span>
+                      <span className="text-gray-500">Households (Census 2011)</span>
+                      <span className="font-medium">{villageData.households2011 != null ? formatNumber(villageData.households2011) : 'Not available'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Coordinates</span>
                       <span className="font-medium font-mono text-xs">
-                        {villageData.latitude.toFixed(4)}, {villageData.longitude.toFixed(4)}
+                        {hasCoordinates ? `${villageData.latitude.toFixed(4)}, ${villageData.longitude.toFixed(4)}` : 'Not available'}
                       </span>
                     </div>
                   </div>
@@ -260,14 +295,12 @@ export default function MapPage() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-500">Competitors</span>
-                      <span className="font-bold text-2xl text-gray-900">{businessData.competitorCount}</span>
+                      <span className="text-sm text-gray-400 italic">Not available yet</span>
                     </div>
-                    {businessData.avgLocalPrice && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Avg Local Price</span>
-                        <span className="font-medium">{formatCurrency(businessData.avgLocalPrice)}</span>
-                      </div>
-                    )}
+                    <p className="text-xs text-gray-400">
+                      Per-category competitor locations for real villages aren't wired up yet — check the
+                      Discovery page's market score for a data-backed estimate where it's available.
+                    </p>
                   </div>
                 </div>
 
