@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/i18n';
 import VoiceButton from '../components/VoiceButton';
 import LanguageToggle from '../components/LanguageToggle';
 import { Eye, EyeOff, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { getErrorMessage } from '../utils/errors';
 
 export default function LoginPage() {
   const { t, language } = useI18n();
@@ -64,7 +65,8 @@ export default function LoginPage() {
       }
       navigate('/dashboard');
     } catch (err) {
-      const message = err.response?.data?.message || (isLogin ? t('auth.invalidCredentials') : t('auth.emailExists'));
+      const fallback = isLogin ? t('auth.invalidCredentials') : t('auth.emailExists');
+      const message = getErrorMessage(err, fallback);
       setErrors({ submit: message });
     } finally {
       setIsLoading(false);
